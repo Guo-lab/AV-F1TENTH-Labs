@@ -30,3 +30,14 @@
 *.exe
 *.out
 *.app
+
+lab1_ws/install
+lab1_ws/log
+lab1_ws/build
+
+lab2_ws/install
+lab2_ws/log
+lab2_ws/build
+
+sim_ws
+f1tenth_gym
