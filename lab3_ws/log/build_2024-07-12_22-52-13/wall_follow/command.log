@@ -1,2 +1,0 @@
-Invoking command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12
-Invoked command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12
