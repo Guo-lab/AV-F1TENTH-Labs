@@ -1,10 +1,30 @@
 # ROS2 installation: https://github.com/f1tenth/f1tenth_gym_ros
 
-# At AV-LAB:
+## For me, I just place dependencies repo ###########
+## and simulator repo both  in this root directory ##
+# .
+# ├── f1tenth_gym
+# │   ├── docs
+# │   ├── examples
+# │   └── gym
+# ├── lab1_ws
+# │   ├── build
+# │   ├── install
+# │   ├── log
+# │   └── src
+# ├── simulator_run
+# └── sim_ws
+#     ├── build
+#     ├── install
+#     ├── log
+#     └── src
+
+
+# At AV-F1TENTH-Labs:
 git clone https://github.com/f1tenth/f1tenth_gym
 cd f1tenth_gym && pip3 install -e .
 
-cd .. # back to AV-LAB
+cd .. # back to AV-F1TENTH-Labs
 mkdir -p sim_ws/src
 cd sim_ws/src
 
@@ -15,7 +35,7 @@ cd f1tenth_gym_ros/config
 # from
 # map_file: "im_ws/src/f1tenth_gym/maps/levine.yaml"
 # to
-# map_path: '/home/gsq/AV-LAB/sim_ws/src/f1tenth_gym_ros/maps/levine'
+# map_path: '/home/gsq/AV-F1TENTH-Labs/sim_ws/src/f1tenth_gym_ros/maps/levine'
 
 cd ../../..
 rosdep install -i --from-path src --rosdistro humble -y
