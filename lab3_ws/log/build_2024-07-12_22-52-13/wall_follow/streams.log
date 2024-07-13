@@ -1,0 +1,62 @@
+[0.012s] Invoking command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12
+[0.089s] [35m[1mConsolidate compiler generated dependencies of target wall_follow_node[0m
+[0.116s] [ 50%] [32mBuilding CXX object CMakeFiles/wall_follow_node.dir/src/wall_follow_node.cpp.o[0m
+[2.245s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kdouble PIDController::GetSteeringAngle(double)[m[K’:
+[2.245s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:55:25:[m[K [01;31m[Kerror: [m[Kexpected initializer before ‘[01m[K+=[m[K’ token
+[2.245s]    55 |         double integral [01;31m[K+=[m[K ki_ * integral_;
+[2.245s]       |                         [01;31m[K^~[m[K
+[2.249s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:60:30:[m[K [01;31m[Kerror: [m[K‘[01m[Kintegral[m[K’ was not declared in this scope; did you mean ‘[01m[Kintegral_[m[K’?
+[2.250s]    60 |         return propotional + [01;31m[Kintegral[m[K + derivative;
+[2.250s]       |                              [01;31m[K^~~~~~~~[m[K
+[2.250s]       |                              [32m[Kintegral_[m[K
+[2.292s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kdouble WallFollow::get_range(float*, double)[m[K’:
+[2.293s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:136:33:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Kstd::vector<float>::size_type[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wsign-compare-Wsign-compare]8;;[m[K]
+[2.293s]   136 |         if (index >= 0 && [01;35m[Kindex < laser_scan_msg->ranges.size()[m[K) {
+[2.293s]       |                           [01;35m[K~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.293s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kdouble WallFollow::get_error(const float*, double)[m[K’:
+[2.293s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:157:39:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst float*[m[K’ to ‘[01m[Kfloat*[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.293s]   157 |        double b_distance = get_range([01;31m[Krange_data[m[K, HALF_PI);
+[2.293s]       |                                      [01;31m[K^~~~~~~~~~[m[K
+[2.293s]       |                                      [01;31m[K|[m[K
+[2.293s]       |                                      [01;31m[Kconst float*[m[K
+[2.294s] 
+[2.294s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:121:29:[m[K [01;36m[Knote: [m[K  initializing argument 1 of ‘[01m[Kdouble WallFollow::get_range(float*, double)[m[K’
+[2.294s]   121 |     double get_range([01;36m[Kfloat* range_data[m[K, double angle) {
+[2.294s]       |                      [01;36m[K~~~~~~~^~~~~~~~~~[m[K
+[2.294s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:158:39:[m[K [01;31m[Kerror: [m[Kinvalid conversion from ‘[01m[Kconst float*[m[K’ to ‘[01m[Kfloat*[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.294s]   158 |        double a_distance = get_range([01;31m[Krange_data[m[K, HALF_PI - theta);
+[2.294s]       |                                      [01;31m[K^~~~~~~~~~[m[K
+[2.294s]       |                                      [01;31m[K|[m[K
+[2.294s]       |                                      [01;31m[Kconst float*[m[K
+[2.294s] 
+[2.295s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:121:29:[m[K [01;36m[Knote: [m[K  initializing argument 1 of ‘[01m[Kdouble WallFollow::get_range(float*, double)[m[K’
+[2.295s]   121 |     double get_range([01;36m[Kfloat* range_data[m[K, double angle) {
+[2.295s]       |                      [01;36m[K~~~~~~~^~~~~~~~~~[m[K
+[2.295s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:159:13:[m[K [01;31m[Kerror: [m[K‘[01m[Kisnan[m[K’ was not declared in this scope; did you mean ‘[01m[Kstd::isnan[m[K’?
+[2.295s]   159 |         if ([01;31m[Kisnan[m[K(a_distance) || isnan(b_distance)) return;
+[2.295s]       |             [01;31m[K^~~~~[m[K
+[2.295s]       |             [32m[Kstd::isnan[m[K
+[2.295s] In file included from [01m[K/opt/ros/humble/include/libstatistics_collector/libstatistics_collector/moving_average_statistics/types.hpp:18[m[K,
+[2.295s]                  from [01m[K/opt/ros/humble/include/libstatistics_collector/libstatistics_collector/collector/generate_statistics_message.hpp:24[m[K,
+[2.295s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/topic_statistics/subscription_topic_statistics.hpp:23[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/subscription.hpp:50[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/any_executable.hpp:25[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategy.hpp:25[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/memory_strategies.hpp:18[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor_options.hpp:20[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executor.hpp:37[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors/multi_threaded_executor.hpp:25[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/executors.hpp:21[m[K,
+[2.296s]                  from [01m[K/opt/ros/humble/include/rclcpp/rclcpp/rclcpp.hpp:155[m[K,
+[2.296s]                  from [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:5[m[K:
+[2.296s] [01m[K/usr/include/c++/11/cmath:632:5:[m[K [01;36m[Knote: [m[K‘[01m[Kstd::isnan[m[K’ declared here
+[2.297s]   632 |     [01;36m[Kisnan[m[K(_Tp __x)
+[2.297s]       |     [01;36m[K^~~~~[m[K
+[2.297s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:159:53:[m[K [01;31m[Kerror: [m[Kreturn-statement with no value, in function returning ‘[01m[Kdouble[m[K’ [[01;31m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-fpermissive-fpermissive]8;;[m[K]
+[2.297s]   159 | (isnan(a_distance) || isnan(b_distance)) [01;31m[Kreturn[m[K;
+[2.297s]       |                                          [01;31m[K^~~~~~[m[K
+[2.297s] 
+[4.334s] gmake[2]: *** [CMakeFiles/wall_follow_node.dir/build.make:76: CMakeFiles/wall_follow_node.dir/src/wall_follow_node.cpp.o] Error 1
+[4.334s] gmake[1]: *** [CMakeFiles/Makefile2:137: CMakeFiles/wall_follow_node.dir/all] Error 2
+[4.335s] gmake: *** [Makefile:146: all] Error 2
+[4.337s] Invoked command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow' returned '2': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12

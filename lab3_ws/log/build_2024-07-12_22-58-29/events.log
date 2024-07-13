@@ -1,0 +1,113 @@
+[0.000000] (-) TimerEvent: {}
+[0.000095] (wall_follow) JobQueued: {'identifier': 'wall_follow', 'dependencies': OrderedDict()}
+[0.000121] (wall_follow) JobStarted: {'identifier': 'wall_follow'}
+[0.007182] (wall_follow) JobProgress: {'identifier': 'wall_follow', 'progress': 'cmake'}
+[0.007715] (wall_follow) JobProgress: {'identifier': 'wall_follow', 'progress': 'build'}
+[0.008261] (wall_follow) Command: {'cmd': ['/usr/bin/cmake', '--build', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow', '--', '-j12', '-l12'], 'cwd': '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow', 'env': OrderedDict([('GJS_DEBUG_TOPICS', 'JS ERROR;JS LOG'), ('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'gsq'), ('XDG_SESSION_TYPE', 'wayland'), ('GIT_ASKPASS', '/usr/share/code/resources/app/extensions/git/dist/askpass.sh'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/gsq'), ('CHROME_DESKTOP', 'code-url-handler.desktop'), ('OLDPWD', '/home/gsq/AV-F1TENTH-Labs'), ('TERM_PROGRAM_VERSION', '1.91.0'), ('DESKTOP_SESSION', 'ubuntu'), ('GIO_LAUNCHED_DESKTOP_FILE', '/usr/share/applications/code.desktop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('VSCODE_GIT_ASKPASS_MAIN', '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js'), ('VSCODE_GIT_ASKPASS_NODE', '/usr/share/code/code'), ('MANAGERPID', '981'), ('SYSTEMD_EXEC_PID', '1141'), ('IM_CONFIG_CHECK_ENV', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('GIO_LAUNCHED_DESKTOP_FILE_PID', '2838'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('COLCON_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install:/home/gsq/AV-F1TENTH-Labs/lab3_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'gsq'), ('JOURNAL_STREAM', '8:21984'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'gsq'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/gsq/.local/bin:/opt/ros/humble/bin:/home/gsq/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/gsq:@/tmp/.ICE-unix/1115,unix/gsq:/tmp/.ICE-unix/1115'), ('INVOCATION_ID', '7240c5c9620e43ab8578eea447a13f74'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('GDK_BACKEND', 'x11'), ('DISPLAY', ':0'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'Unity'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.M9T6Q2'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('VSCODE_GIT_IPC_HANDLE', '/run/user/1000/vscode-git-7b15f88a35.sock'), ('TERM_PROGRAM', 'vscode'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow:/opt/ros/humble'), ('ORIGINAL_XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GJS_DEBUG_OUTPUT', 'stderr'), ('VSCODE_GIT_ASKPASS_EXTRA_ARGS', ''), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble')]), 'shell': False}
+[0.046971] (wall_follow) StdoutLine: {'line': b'\x1b[35m\x1b[1mConsolidate compiler generated dependencies of target wall_follow_node\x1b[0m\n'}
+[0.064056] (wall_follow) StdoutLine: {'line': b'[ 50%] \x1b[32mBuilding CXX object CMakeFiles/wall_follow_node.dir/src/wall_follow_node.cpp.o\x1b[0m\n'}
+[0.099433] (-) TimerEvent: {}
+[0.199713] (-) TimerEvent: {}
+[0.299974] (-) TimerEvent: {}
+[0.400265] (-) TimerEvent: {}
+[0.500559] (-) TimerEvent: {}
+[0.600773] (-) TimerEvent: {}
+[0.701055] (-) TimerEvent: {}
+[0.801274] (-) TimerEvent: {}
+[0.901522] (-) TimerEvent: {}
+[1.001779] (-) TimerEvent: {}
+[1.102039] (-) TimerEvent: {}
+[1.202294] (-) TimerEvent: {}
+[1.302542] (-) TimerEvent: {}
+[1.402788] (-) TimerEvent: {}
+[1.503042] (-) TimerEvent: {}
+[1.603383] (-) TimerEvent: {}
+[1.703646] (-) TimerEvent: {}
+[1.803934] (-) TimerEvent: {}
+[1.904212] (-) TimerEvent: {}
+[2.004456] (-) TimerEvent: {}
+[2.104762] (-) TimerEvent: {}
+[2.205005] (-) TimerEvent: {}
+[2.305255] (-) TimerEvent: {}
+[2.405547] (-) TimerEvent: {}
+[2.505791] (-) TimerEvent: {}
+[2.606034] (-) TimerEvent: {}
+[2.706272] (-) TimerEvent: {}
+[2.806513] (-) TimerEvent: {}
+[2.906754] (-) TimerEvent: {}
+[3.006992] (-) TimerEvent: {}
+[3.107231] (-) TimerEvent: {}
+[3.207469] (-) TimerEvent: {}
+[3.307707] (-) TimerEvent: {}
+[3.407955] (-) TimerEvent: {}
+[3.508211] (-) TimerEvent: {}
+[3.608474] (-) TimerEvent: {}
+[3.708748] (-) TimerEvent: {}
+[3.808998] (-) TimerEvent: {}
+[3.909239] (-) TimerEvent: {}
+[4.009478] (-) TimerEvent: {}
+[4.109722] (-) TimerEvent: {}
+[4.209966] (-) TimerEvent: {}
+[4.310208] (-) TimerEvent: {}
+[4.410461] (-) TimerEvent: {}
+[4.510716] (-) TimerEvent: {}
+[4.610950] (-) TimerEvent: {}
+[4.711182] (-) TimerEvent: {}
+[4.811419] (-) TimerEvent: {}
+[4.911653] (-) TimerEvent: {}
+[5.011888] (-) TimerEvent: {}
+[5.112120] (-) TimerEvent: {}
+[5.212368] (-) TimerEvent: {}
+[5.312692] (-) TimerEvent: {}
+[5.412949] (-) TimerEvent: {}
+[5.513213] (-) TimerEvent: {}
+[5.613475] (-) TimerEvent: {}
+[5.713732] (-) TimerEvent: {}
+[5.813990] (-) TimerEvent: {}
+[5.914244] (-) TimerEvent: {}
+[6.014502] (-) TimerEvent: {}
+[6.114757] (-) TimerEvent: {}
+[6.215016] (-) TimerEvent: {}
+[6.315272] (-) TimerEvent: {}
+[6.415532] (-) TimerEvent: {}
+[6.515789] (-) TimerEvent: {}
+[6.616047] (-) TimerEvent: {}
+[6.716307] (-) TimerEvent: {}
+[6.816570] (-) TimerEvent: {}
+[6.916820] (-) TimerEvent: {}
+[7.017038] (-) TimerEvent: {}
+[7.117261] (-) TimerEvent: {}
+[7.217498] (-) TimerEvent: {}
+[7.297024] (wall_follow) StdoutLine: {'line': b'[100%] \x1b[32m\x1b[1mLinking CXX executable wall_follow_node\x1b[0m\n'}
+[7.317589] (-) TimerEvent: {}
+[7.417813] (-) TimerEvent: {}
+[7.518031] (-) TimerEvent: {}
+[7.618303] (-) TimerEvent: {}
+[7.660331] (wall_follow) StdoutLine: {'line': b'[100%] Built target wall_follow_node\n'}
+[7.669463] (wall_follow) CommandEnded: {'returncode': 0}
+[7.691494] (wall_follow) JobProgress: {'identifier': 'wall_follow', 'progress': 'install'}
+[7.698896] (wall_follow) Command: {'cmd': ['/usr/bin/cmake', '--install', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow'], 'cwd': '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow', 'env': OrderedDict([('GJS_DEBUG_TOPICS', 'JS ERROR;JS LOG'), ('LESSOPEN', '| /usr/bin/lesspipe %s'), ('USER', 'gsq'), ('XDG_SESSION_TYPE', 'wayland'), ('GIT_ASKPASS', '/usr/share/code/resources/app/extensions/git/dist/askpass.sh'), ('SHLVL', '1'), ('LD_LIBRARY_PATH', '/opt/ros/humble/opt/rviz_ogre_vendor/lib:/opt/ros/humble/lib/x86_64-linux-gnu:/opt/ros/humble/lib'), ('HOME', '/home/gsq'), ('CHROME_DESKTOP', 'code-url-handler.desktop'), ('OLDPWD', '/home/gsq/AV-F1TENTH-Labs'), ('TERM_PROGRAM_VERSION', '1.91.0'), ('DESKTOP_SESSION', 'ubuntu'), ('GIO_LAUNCHED_DESKTOP_FILE', '/usr/share/applications/code.desktop'), ('ROS_PYTHON_VERSION', '3'), ('GNOME_SHELL_SESSION_MODE', 'ubuntu'), ('GTK_MODULES', 'gail:atk-bridge'), ('VSCODE_GIT_ASKPASS_MAIN', '/usr/share/code/resources/app/extensions/git/dist/askpass-main.js'), ('VSCODE_GIT_ASKPASS_NODE', '/usr/share/code/code'), ('MANAGERPID', '981'), ('SYSTEMD_EXEC_PID', '1141'), ('IM_CONFIG_CHECK_ENV', '1'), ('DBUS_SESSION_BUS_ADDRESS', 'unix:path=/run/user/1000/bus'), ('COLORTERM', 'truecolor'), ('GIO_LAUNCHED_DESKTOP_FILE_PID', '2838'), ('IM_CONFIG_PHASE', '1'), ('WAYLAND_DISPLAY', 'wayland-0'), ('COLCON_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install:/home/gsq/AV-F1TENTH-Labs/lab3_ws/install'), ('ROS_DISTRO', 'humble'), ('LOGNAME', 'gsq'), ('JOURNAL_STREAM', '8:21984'), ('_', '/usr/bin/colcon'), ('ROS_VERSION', '2'), ('XDG_SESSION_CLASS', 'user'), ('USERNAME', 'gsq'), ('TERM', 'xterm-256color'), ('GNOME_DESKTOP_SESSION_ID', 'this-is-deprecated'), ('ROS_LOCALHOST_ONLY', '0'), ('PATH', '/home/gsq/.local/bin:/opt/ros/humble/bin:/home/gsq/.local/bin:/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/usr/local/games:/snap/bin:/snap/bin'), ('SESSION_MANAGER', 'local/gsq:@/tmp/.ICE-unix/1115,unix/gsq:/tmp/.ICE-unix/1115'), ('INVOCATION_ID', '7240c5c9620e43ab8578eea447a13f74'), ('XDG_MENU_PREFIX', 'gnome-'), ('GNOME_SETUP_DISPLAY', ':1'), ('XDG_RUNTIME_DIR', '/run/user/1000'), ('GDK_BACKEND', 'x11'), ('DISPLAY', ':0'), ('LANG', 'en_US.UTF-8'), ('XDG_CURRENT_DESKTOP', 'Unity'), ('XMODIFIERS', '@im=ibus'), ('XDG_SESSION_DESKTOP', 'ubuntu'), ('XAUTHORITY', '/run/user/1000/.mutter-Xwaylandauth.M9T6Q2'), ('LS_COLORS', 'rs=0:di=01;34:ln=01;36:mh=00:pi=40;33:so=01;35:do=01;35:bd=40;33;01:cd=40;33;01:or=40;31;01:mi=00:su=37;41:sg=30;43:ca=30;41:tw=30;42:ow=34;42:st=37;44:ex=01;32:*.tar=01;31:*.tgz=01;31:*.arc=01;31:*.arj=01;31:*.taz=01;31:*.lha=01;31:*.lz4=01;31:*.lzh=01;31:*.lzma=01;31:*.tlz=01;31:*.txz=01;31:*.tzo=01;31:*.t7z=01;31:*.zip=01;31:*.z=01;31:*.dz=01;31:*.gz=01;31:*.lrz=01;31:*.lz=01;31:*.lzo=01;31:*.xz=01;31:*.zst=01;31:*.tzst=01;31:*.bz2=01;31:*.bz=01;31:*.tbz=01;31:*.tbz2=01;31:*.tz=01;31:*.deb=01;31:*.rpm=01;31:*.jar=01;31:*.war=01;31:*.ear=01;31:*.sar=01;31:*.rar=01;31:*.alz=01;31:*.ace=01;31:*.zoo=01;31:*.cpio=01;31:*.7z=01;31:*.rz=01;31:*.cab=01;31:*.wim=01;31:*.swm=01;31:*.dwm=01;31:*.esd=01;31:*.jpg=01;35:*.jpeg=01;35:*.mjpg=01;35:*.mjpeg=01;35:*.gif=01;35:*.bmp=01;35:*.pbm=01;35:*.pgm=01;35:*.ppm=01;35:*.tga=01;35:*.xbm=01;35:*.xpm=01;35:*.tif=01;35:*.tiff=01;35:*.png=01;35:*.svg=01;35:*.svgz=01;35:*.mng=01;35:*.pcx=01;35:*.mov=01;35:*.mpg=01;35:*.mpeg=01;35:*.m2v=01;35:*.mkv=01;35:*.webm=01;35:*.webp=01;35:*.ogm=01;35:*.mp4=01;35:*.m4v=01;35:*.mp4v=01;35:*.vob=01;35:*.qt=01;35:*.nuv=01;35:*.wmv=01;35:*.asf=01;35:*.rm=01;35:*.rmvb=01;35:*.flc=01;35:*.avi=01;35:*.fli=01;35:*.flv=01;35:*.gl=01;35:*.dl=01;35:*.xcf=01;35:*.xwd=01;35:*.yuv=01;35:*.cgm=01;35:*.emf=01;35:*.ogv=01;35:*.ogx=01;35:*.aac=00;36:*.au=00;36:*.flac=00;36:*.m4a=00;36:*.mid=00;36:*.midi=00;36:*.mka=00;36:*.mp3=00;36:*.mpc=00;36:*.ogg=00;36:*.ra=00;36:*.wav=00;36:*.oga=00;36:*.opus=00;36:*.spx=00;36:*.xspf=00;36:'), ('VSCODE_GIT_IPC_HANDLE', '/run/user/1000/vscode-git-7b15f88a35.sock'), ('TERM_PROGRAM', 'vscode'), ('SSH_AGENT_LAUNCHER', 'gnome-keyring'), ('SSH_AUTH_SOCK', '/run/user/1000/keyring/ssh'), ('AMENT_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow:/opt/ros/humble'), ('ORIGINAL_XDG_CURRENT_DESKTOP', 'ubuntu:GNOME'), ('SHELL', '/bin/bash'), ('QT_ACCESSIBILITY', '1'), ('GDMSESSION', 'ubuntu'), ('LESSCLOSE', '/usr/bin/lesspipe %s %s'), ('GJS_DEBUG_OUTPUT', 'stderr'), ('VSCODE_GIT_ASKPASS_EXTRA_ARGS', ''), ('QT_IM_MODULE', 'ibus'), ('PWD', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow'), ('LC_ALL', 'en_US.UTF-8'), ('XDG_CONFIG_DIRS', '/etc/xdg/xdg-ubuntu:/etc/xdg'), ('XDG_DATA_DIRS', '/usr/share/ubuntu:/usr/local/share/:/usr/share/:/var/lib/snapd/desktop'), ('PYTHONPATH', '/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros/lib/python3.10/site-packages:/opt/ros/humble/lib/python3.10/site-packages:/opt/ros/humble/local/lib/python3.10/dist-packages'), ('COLCON', '1'), ('CMAKE_PREFIX_PATH', '/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow:/home/gsq/AV-F1TENTH-Labs/sim_ws/install/f1tenth_gym_ros:/opt/ros/humble')]), 'shell': False}
+[7.705308] (wall_follow) StdoutLine: {'line': b'-- Install configuration: ""\n'}
+[7.705510] (wall_follow) StdoutLine: {'line': b'-- Installing: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/lib/wall_follow/wall_follow_node\n'}
+[7.709732] (wall_follow) StdoutLine: {'line': b'-- Set runtime path of "/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/lib/wall_follow/wall_follow_node" to ""\n'}
+[7.709911] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow//launch\n'}
+[7.710074] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow//launch/lab3_launch.py\n'}
+[7.710225] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/package_run_dependencies/wall_follow\n'}
+[7.710361] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/parent_prefix_path/wall_follow\n'}
+[7.710487] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/ament_prefix_path.sh\n'}
+[7.710598] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/ament_prefix_path.dsv\n'}
+[7.710740] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/path.sh\n'}
+[7.710832] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/path.dsv\n'}
+[7.710922] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.bash\n'}
+[7.711010] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.sh\n'}
+[7.711099] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.zsh\n'}
+[7.711189] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.dsv\n'}
+[7.711280] (wall_follow) StdoutLine: {'line': b'-- Installing: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/package.dsv\n'}
+[7.711370] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/packages/wall_follow\n'}
+[7.711461] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/cmake/wall_followConfig.cmake\n'}
+[7.711557] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/cmake/wall_followConfig-version.cmake\n'}
+[7.711645] (wall_follow) StdoutLine: {'line': b'-- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/package.xml\n'}
+[7.712266] (wall_follow) CommandEnded: {'returncode': 0}
+[7.718561] (-) TimerEvent: {}
+[7.747294] (wall_follow) JobEnded: {'identifier': 'wall_follow', 'rc': 0}
+[7.747918] (-) EventReactorShutdown: {}

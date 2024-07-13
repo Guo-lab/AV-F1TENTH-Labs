@@ -1,0 +1,56 @@
+[0.009s] Invoking command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12
+[0.046s] [35m[1mConsolidate compiler generated dependencies of target wall_follow_node[0m
+[0.065s] [ 50%] [32mBuilding CXX object CMakeFiles/wall_follow_node.dir/src/wall_follow_node.cpp.o[0m
+[2.150s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kdouble WallFollow::get_range(float*, double)[m[K’:
+[2.150s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:54:33:[m[K [01;35m[Kwarning: [m[Kcomparison of integer expressions of different signedness: ‘[01m[Kint[m[K’ and ‘[01m[Kstd::vector<float>::size_type[m[K’ {aka ‘[01m[Klong unsigned int[m[K’} [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wsign-compare-Wsign-compare]8;;[m[K]
+[2.150s]    54 |         if (index >= 0 && [01;35m[Kindex < laser_scan_msg->ranges.size()[m[K) {
+[2.150s]       |                           [01;35m[K~~~~~~^~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~[m[K
+[2.151s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kdouble WallFollow::get_error(const float*, double)[m[K’:
+[2.151s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:62:35:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Krange_data[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+[2.151s]    62 |     double get_error([01;35m[Kconst float* range_data[m[K, double dist) {
+[2.151s]       |                      [01;35m[K~~~~~~~~~~~~~^~~~~~~~~~[m[K
+[2.151s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:62:54:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kdist[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+[2.151s]    62 |     double get_error(const float* range_data, [01;35m[Kdouble dist[m[K) {
+[2.151s]       |                                               [01;35m[K~~~~~~~^~~~[m[K
+[2.151s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kvoid WallFollow::pid_control(double, double)[m[K’:
+[2.151s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:90:16:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kangle[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+[2.152s]    90 |         double [01;35m[Kangle[m[K = 0.0;
+[2.152s]       |                [01;35m[K^~~~~[m[K
+[2.152s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:79:29:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kerror[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+[2.152s]    79 |     void pid_control([01;35m[Kdouble error[m[K, double velocity) {
+[2.152s]       |                      [01;35m[K~~~~~~~^~~~~[m[K
+[2.152s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:79:43:[m[K [01;35m[Kwarning: [m[Kunused parameter ‘[01m[Kvelocity[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-parameter-Wunused-parameter]8;;[m[K]
+[2.152s]    79 |     void pid_control(double error, [01;35m[Kdouble velocity[m[K) {
+[2.152s]       |                                    [01;35m[K~~~~~~~^~~~~~~~[m[K
+[2.152s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:[m[K In member function ‘[01m[Kvoid WallFollow::scan_callback(sensor_msgs::msg::LaserScan_<std::allocator<void> >::ConstSharedPtr)[m[K’:
+[2.152s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:110:16:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kerror[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+[2.152s]   110 |         double [01;35m[Kerror[m[K = get_error(laser_scan_msg->ranges.data(), 0.3);  // TODO: replace with error calculated by get_error()
+[2.153s]       |                [01;35m[K^~~~~[m[K
+[2.153s] [01m[K/home/gsq/AV-F1TENTH-Labs/lab3_ws/src/wall_follow_node/src/wall_follow_node.cpp:111:16:[m[K [01;35m[Kwarning: [m[Kunused variable ‘[01m[Kvelocity[m[K’ [[01;35m[K]8;;https://gcc.gnu.org/onlinedocs/gcc/Warning-Options.html#index-Wunused-variable-Wunused-variable]8;;[m[K]
+[2.153s]   111 |         double [01;35m[Kvelocity[m[K = 0.0;                            // TODO: calculate desired car velocity based on error
+[2.153s]       |                [01;35m[K^~~~~~~~[m[K
+[7.246s] [100%] [32m[1mLinking CXX executable wall_follow_node[0m
+[7.595s] [100%] Built target wall_follow_node
+[7.606s] Invoked command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --build /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow -- -j12 -l12
+[7.635s] Invoking command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow
+[7.641s] -- Install configuration: ""
+[7.641s] -- Installing: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/lib/wall_follow/wall_follow_node
+[7.645s] -- Set runtime path of "/home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/lib/wall_follow/wall_follow_node" to ""
+[7.645s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow//launch
+[7.645s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow//launch/lab3_launch.py
+[7.645s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/package_run_dependencies/wall_follow
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/parent_prefix_path/wall_follow
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/ament_prefix_path.sh
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/ament_prefix_path.dsv
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/path.sh
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/environment/path.dsv
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.bash
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.sh
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.zsh
+[7.646s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/local_setup.dsv
+[7.646s] -- Installing: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/package.dsv
+[7.647s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/ament_index/resource_index/packages/wall_follow
+[7.647s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/cmake/wall_followConfig.cmake
+[7.647s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/cmake/wall_followConfig-version.cmake
+[7.647s] -- Up-to-date: /home/gsq/AV-F1TENTH-Labs/lab3_ws/install/wall_follow/share/wall_follow/package.xml
+[7.648s] Invoked command in '/home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow' returned '0': CMAKE_PREFIX_PATH=${CMAKE_PREFIX_PATH}:/opt/ros/humble /usr/bin/cmake --install /home/gsq/AV-F1TENTH-Labs/lab3_ws/build/wall_follow
