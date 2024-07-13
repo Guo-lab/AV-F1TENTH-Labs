@@ -43,5 +43,18 @@ lab3_ws/install
 lab3_ws/log
 lab3_ws/build
 
+lab4_ws/install
+lab4_ws/log
+lab4_ws/build
+
+lab5_ws/install
+lab5_ws/log
+lab5_ws/build
+
+lab6_ws/install
+lab6_ws/log
+lab6_ws/build
+
+
 sim_ws
 f1tenth_gym

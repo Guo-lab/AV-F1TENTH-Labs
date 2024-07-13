@@ -9,4 +9,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 source /opt/ros/humble/setup.bash
 source install/local_setup.bash
 colcon build
-ros2 run wall_follow_node wall_follow_node
+ros2 run wall_follow wall_follow_node
