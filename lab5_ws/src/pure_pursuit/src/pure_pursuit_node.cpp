@@ -58,6 +58,66 @@ class WaypointsReader {
     }
 };
 
+class WaypointVisualizer {
+    /**
+     * Message Filter dropping message: frame 'base_link' at time 1721112901.771 for reason 'discarding message because the queue is full'
+     *  To solve in the future.
+     */
+   public:
+    WaypointVisualizer() {}
+    void update_visualization(const std::vector<std::pair<double, double>>& waypoints) {
+        this->waypoints_to_visualize = waypoints;
+        visualize_waypoints();
+    }
+
+    visualization_msgs::msg::Marker current_waypoint;
+    visualization_msgs::msg::Marker goal_waypoint;
+    visualization_msgs::msg::Marker path_to_goal;
+
+   private:
+    std::vector<std::pair<double, double>> waypoints_to_visualize;
+    void visualize_waypoints() {
+        current_waypoint.header.frame_id = "base_link";
+        current_waypoint.header.stamp = rclcpp::Clock().now();
+        current_waypoint.ns = "waypoints";
+        current_waypoint.type = visualization_msgs::msg::Marker::POINTS;
+        current_waypoint.action = visualization_msgs::msg::Marker::ADD;
+        current_waypoint.id = 0;
+
+        current_waypoint.scale.x = 0.2;
+        current_waypoint.scale.y = 0.2;
+        current_waypoint.scale.z = 0.2;
+        current_waypoint.color.g = 1.0f;
+        current_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
+        current_waypoint.color.r = 0.0;
+        current_waypoint.color.b = 0.0;
+
+        goal_waypoint.header.frame_id = "base_link";
+        goal_waypoint.header.stamp = rclcpp::Clock().now();
+        goal_waypoint.ns = "waypoints";
+        goal_waypoint.type = visualization_msgs::msg::Marker::POINTS;
+        goal_waypoint.action = visualization_msgs::msg::Marker::ADD;
+        goal_waypoint.id = 0;
+
+        goal_waypoint.scale.x = 0.2;
+        goal_waypoint.scale.y = 0.2;
+        goal_waypoint.scale.z = 0.2;
+        goal_waypoint.color.g = 0.0f;
+        goal_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
+        goal_waypoint.color.r = 1.0;
+        goal_waypoint.color.b = 0.0;
+
+        if (!waypoints_to_visualize.empty()) {
+            current_waypoint.pose.position.x = waypoints_to_visualize.front().first;
+            current_waypoint.pose.position.y = waypoints_to_visualize.front().second;
+            current_waypoint.pose.position.z = 0;
+            goal_waypoint.pose.position.x = waypoints_to_visualize.back().first;
+            goal_waypoint.pose.position.y = waypoints_to_visualize.back().second;
+            goal_waypoint.pose.position.z = 0;
+        }
+    }
+};
+
 /**
  * A geometric path tracking controller which relies on kinematic vehicle model for selecting commnads
  */
@@ -72,9 +132,15 @@ class PurePursuit : public rclcpp::Node {
 
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub;
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_drive_pub;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr goal_marker_pub;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr path_marker_pub;
 
     std::vector<std::pair<double, double>> waypoints;
     const double lookahead_distance = 1.0;
+    WaypointVisualizer waypoint_visualizer;
+
+    bool no_waypoints = true;
 
     /**
      * @brief Interpolate between two waypoints
@@ -105,11 +171,14 @@ class PurePursuit : public rclcpp::Node {
      */
     auto get_current_waypoint(const std::shared_ptr<const nav_msgs::msg::Odometry>& curr_pose)
         -> std::pair<double, double> {
-        std::pair<double, double> curr_robot = std::make_pair(curr_pose->pose.pose.position.x, curr_pose->pose.pose.position.y);
+        std::pair<double, double> curr_robot =
+            std::make_pair(curr_pose->pose.pose.position.x, curr_pose->pose.pose.position.y);
         if (waypoints.empty()) {
             std::cout << "No waypoints found" << std::endl;
+            no_waypoints = true;
             return curr_robot;
         }
+        no_waypoints = false;
 
         std::pair<double, double> prev_wp;
         std::pair<double, double> curr_wp = waypoints.front();
@@ -173,13 +242,18 @@ class PurePursuit : public rclcpp::Node {
             odom_topic, 10, std::bind(&PurePursuit::pose_callback, this, placeholders::_1));
 
         ackermann_drive_pub = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic, 10);
+        // marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
+        // goal_marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("goal_marker", 10);
+
     }
 
     void pose_callback(const std::shared_ptr<const nav_msgs::msg::Odometry>& pose_msg) {
-        std::cout << "Pose callback" << std::endl;
-
         // TODO: find the current waypoint to track using methods mentioned in lecture
         std::pair<double, double> curr_waypoint = get_current_waypoint(pose_msg);
+
+        // waypoint_visualizer.update_visualization(waypoints);
+        // marker_pub->publish(waypoint_visualizer.current_waypoint);
+        // goal_marker_pub->publish(waypoint_visualizer.goal_waypoint);
 
         // TODO: transform goal point to vehicle frame of reference
         geometry_msgs::msg::Pose current_pose = pose_msg->pose.pose;
@@ -192,6 +266,7 @@ class PurePursuit : public rclcpp::Node {
         double roll, pitch, yaw;
         /** @ref:
          * https://www.formula1-dictionary.net/motions_of_f1_car.html
+         *  https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
          *  https://shuffleai.blog/blog/Three_Methods_of_Vehicle_Lateral_Control.html
          */
         m.getRPY(roll, pitch, yaw);
@@ -211,6 +286,9 @@ class PurePursuit : public rclcpp::Node {
         // TODO: publish drive message, don't forget to limit the steering angle.
         drive_msg.drive.steering_angle = steering_angle;
         drive_msg.drive.speed = GetSpeed(steering_angle);
+        if (no_waypoints) {
+            drive_msg.drive.speed = 0.0;
+        }
 
         ackermann_drive_pub->publish(drive_msg);
     }
