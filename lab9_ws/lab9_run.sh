@@ -9,8 +9,4 @@ ros2 run teleop_twist_keyboard teleop_twist_keyboard
 source /opt/ros/humble/setup.bash
 source install/local_setup.bash
 colcon build
-
-ros2 run pure_pursuit waypoints_logging.py
-
-ros2 run pure_pursuit pure_pursuit_node
-
+ros2 run mpc mpc_node

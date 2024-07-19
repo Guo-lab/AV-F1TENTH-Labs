@@ -12,6 +12,7 @@ from scipy.interpolate import splprep, splev
 
 topic = 'ego_racecar/odom'
 file = open('./src/pure_pursuit/data/waypoints.csv', 'w')
+timer = 0
 
 class WaypointLogger(Node):
     def __init__(self):
@@ -20,7 +21,10 @@ class WaypointLogger(Node):
         print(f"Saving Waypoints to: wps.csv")
     
     def save_waypoint(self, data):
-        file.write('%f, %f\n' % (data.pose.pose.position.x, data.pose.pose.position.y))
+        global timer
+        timer = timer + 1
+        if not (timer % 100):
+            file.write('%f, %f\n' % (data.pose.pose.position.x, data.pose.pose.position.y))
         
 def shutdown():
     file.close()

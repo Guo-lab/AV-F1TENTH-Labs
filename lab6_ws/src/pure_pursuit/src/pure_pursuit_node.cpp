@@ -5,6 +5,8 @@
 #include <cassert>
 #include <cmath>
 #include <fstream>
+#include <geometry_msgs/msg/pose_stamped.hpp>
+#include <nav_msgs/msg/path.hpp>
 #include <sstream>
 #include <string>
 #include <vector>
@@ -15,6 +17,7 @@
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker.hpp"
+
 /// CHECK: include needed ROS msg type headers and libraries
 
 #include <utility>
@@ -60,27 +63,15 @@ class WaypointsReader {
 
 class WaypointVisualizer {
     /**
-     * Message Filter dropping message: frame 'base_link' at time 1721112901.771 for reason 'discarding message because the queue is full'
-     *  To solve in the future.
+     * Message Filter dropping message: frame 'base_link' at time 1721112901.771 for reason 'discarding message because
+     * the queue is full' To solve in the future.
      */
    public:
-    WaypointVisualizer() {}
-    void update_visualization(const std::vector<std::pair<double, double>>& waypoints) {
-        this->waypoints_to_visualize = waypoints;
-        visualize_waypoints();
-    }
+    WaypointVisualizer() {
+        current_waypoint.lifetime = rclcpp::Duration::from_seconds(0.5);
+        goal_waypoint.lifetime = rclcpp::Duration::from_seconds(0.5);
 
-    visualization_msgs::msg::Marker current_waypoint;
-    visualization_msgs::msg::Marker goal_waypoint;
-    visualization_msgs::msg::Marker path_to_goal;
-
-   private:
-    std::vector<std::pair<double, double>> waypoints_to_visualize;
-    void visualize_waypoints() {
-        current_waypoint.header.frame_id = "base_link";
-        current_waypoint.header.stamp = rclcpp::Clock().now();
-        current_waypoint.ns = "waypoints";
-        current_waypoint.type = visualization_msgs::msg::Marker::POINTS;
+        current_waypoint.type = visualization_msgs::msg::Marker::SPHERE;
         current_waypoint.action = visualization_msgs::msg::Marker::ADD;
         current_waypoint.id = 0;
 
@@ -91,29 +82,68 @@ class WaypointVisualizer {
         current_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
         current_waypoint.color.r = 0.0;
         current_waypoint.color.b = 0.0;
+        current_waypoint.header.frame_id = "map";
 
-        goal_waypoint.header.frame_id = "base_link";
-        goal_waypoint.header.stamp = rclcpp::Clock().now();
-        goal_waypoint.ns = "waypoints";
-        goal_waypoint.type = visualization_msgs::msg::Marker::POINTS;
+        goal_waypoint.type = visualization_msgs::msg::Marker::CYLINDER;
         goal_waypoint.action = visualization_msgs::msg::Marker::ADD;
         goal_waypoint.id = 0;
 
         goal_waypoint.scale.x = 0.2;
         goal_waypoint.scale.y = 0.2;
-        goal_waypoint.scale.z = 0.2;
+        goal_waypoint.scale.z = 0.5;
         goal_waypoint.color.g = 0.0f;
         goal_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
         goal_waypoint.color.r = 1.0;
         goal_waypoint.color.b = 0.0;
+        goal_waypoint.header.frame_id = "map";
+
+        current_waypoint.pose.position.z = 0;
+        goal_waypoint.pose.position.z = 0;
+    }
+
+    void update_visualization(const std::vector<std::pair<double, double>>& waypoints) {
+        this->waypoints_to_visualize = waypoints;
+        std::cout << "size: " << this->waypoints_to_visualize.size() << std::endl;
+
+        visualize_waypoints();
+    }
+
+    visualization_msgs::msg::Marker current_waypoint;
+    visualization_msgs::msg::Marker goal_waypoint;
+    nav_msgs::msg::Path path_msg;
+
+   private:
+    std::vector<std::pair<double, double>> waypoints_to_visualize;
+
+    void visualize_waypoints() {
+        path_msg.poses.clear();
+        for (auto each : waypoints_to_visualize) {
+            geometry_msgs::msg::PoseStamped pose;
+            pose.header.stamp = rclcpp::Clock().now();
+            pose.header.frame_id = "map";
+            pose.pose.position.x = each.first;
+            pose.pose.position.y = each.second;
+            pose.pose.position.z = 0.0;
+            pose.pose.orientation.x = 0.0;
+            pose.pose.orientation.y = 0.0;
+            pose.pose.orientation.z = 0.0;
+            pose.pose.orientation.w = 1.0;
+            path_msg.poses.push_back(pose);
+        }
+        path_msg.header = path_msg.poses[0].header;
+        std::cout << "Visualizing..." << std::endl;
+
+        current_waypoint.header.stamp = rclcpp::Clock().now();
+
+        goal_waypoint.header.stamp = rclcpp::Clock().now();
 
         if (!waypoints_to_visualize.empty()) {
+            std::cout << "There are waypoints to visualize" << std::endl;
             current_waypoint.pose.position.x = waypoints_to_visualize.front().first;
             current_waypoint.pose.position.y = waypoints_to_visualize.front().second;
-            current_waypoint.pose.position.z = 0;
+
             goal_waypoint.pose.position.x = waypoints_to_visualize.back().first;
             goal_waypoint.pose.position.y = waypoints_to_visualize.back().second;
-            goal_waypoint.pose.position.z = 0;
         }
     }
 };
@@ -134,7 +164,7 @@ class PurePursuit : public rclcpp::Node {
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_drive_pub;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr goal_marker_pub;
-    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr path_marker_pub;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub;
 
     std::vector<std::pair<double, double>> waypoints;
     const double lookahead_distance = 1.0;
@@ -224,76 +254,102 @@ class PurePursuit : public rclcpp::Node {
     auto GetSpeed(double steering_angle) -> double {
         double abs_angle = std::abs(steering_angle);
         if (abs_angle >= 0.0 * (M_PI / 180.0) && abs_angle <= 10.0 * (M_PI / 180.0)) {
-            return 3;
-        }
-        if (abs_angle > 10.0 * (M_PI / 180.0) && abs_angle <= 20.0 * (M_PI / 180.0)) {
             return 2;
         }
-        return 1;
+        if (abs_angle > 10.0 * (M_PI / 180.0) && abs_angle <= 20.0 * (M_PI / 180.0)) {
+            return 1;
+        }
+        return 0.5;
     }
 
    public:
     PurePursuit() : Node("pure_pursuit_node") {
+        marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 1);
+        goal_marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("goal_marker", 1);
+        path_pub = this->create_publisher<nav_msgs::msg::Path>("path", 10);
+
         WaypointsReader waypoints_reader(waypoints);
         std::cout << "Waypoints loaded: " << waypoints.size() << std::endl;
 
+        waypoint_visualizer.update_visualization(waypoints);
+
+        marker_pub->publish(waypoint_visualizer.current_waypoint);
+        goal_marker_pub->publish(waypoint_visualizer.goal_waypoint);
+        path_pub->publish(waypoint_visualizer.path_msg);
+
         // TODO: create ROS subscribers and publishers
         pose_sub = this->create_subscription<nav_msgs::msg::Odometry>(
-            odom_topic, 10, std::bind(&PurePursuit::pose_callback, this, placeholders::_1));
+            odom_topic, 1000, std::bind(&PurePursuit::pose_callback, this, placeholders::_1));
 
         ackermann_drive_pub = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>(drive_topic, 10);
-        // marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 10);
-        // goal_marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("goal_marker", 10);
 
+        reach_last_waypoint = true;
     }
 
     void pose_callback(const std::shared_ptr<const nav_msgs::msg::Odometry>& pose_msg) {
-        // TODO: find the current waypoint to track using methods mentioned in lecture
-        std::pair<double, double> curr_waypoint = get_current_waypoint(pose_msg);
-
-        // waypoint_visualizer.update_visualization(waypoints);
-        // marker_pub->publish(waypoint_visualizer.current_waypoint);
-        // goal_marker_pub->publish(waypoint_visualizer.goal_waypoint);
-
-        // TODO: transform goal point to vehicle frame of reference
-        geometry_msgs::msg::Pose current_pose = pose_msg->pose.pose;
-        double dx = curr_waypoint.first - current_pose.position.x;
-        double dy = curr_waypoint.second - current_pose.position.y;
-
-        tf2::Quaternion q(current_pose.orientation.x, current_pose.orientation.y, current_pose.orientation.z,
-                          current_pose.orientation.w);
-        tf2::Matrix3x3 m(q);
-        double roll, pitch, yaw;
-        /** @ref:
-         * https://www.formula1-dictionary.net/motions_of_f1_car.html
-         *  https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
-         *  https://shuffleai.blog/blog/Three_Methods_of_Vehicle_Lateral_Control.html
-         */
-        m.getRPY(roll, pitch, yaw);
-
-        // double x_vehicle_frame = cos(yaw) * dx + sin(yaw) * dy;
-        double y_vehicle_frame = -sin(yaw) * dx + cos(yaw) * dy;
-
-        // TODO: calculate curvature/steering angle
-        double curvature = 2 * y_vehicle_frame / (lookahead_distance * lookahead_distance);
-        double steering_angle = curvature * 0.5;
-        if (steering_angle > M_PI / 2) {
-            steering_angle = M_PI / 2;
-        } else if (steering_angle < -M_PI / 2) {
-            steering_angle = -M_PI / 2;
+        if (euclidean_distance(curr_waypoint_,
+                               std::make_pair(pose_msg->pose.pose.position.x, pose_msg->pose.pose.position.y)) <= 0.5) {
+            reach_last_waypoint = true;
         }
+        if (reach_last_waypoint == true) {
+            // TODO: find the current waypoint to track using methods mentioned in lecture
+            std::pair<double, double> curr_waypoint = get_current_waypoint(pose_msg);
+            curr_waypoint_ = curr_waypoint;
+            std::cout << "current waypoint: " << curr_waypoint_.first << ", " << curr_waypoint_.second << std::endl;
+            std::cout << "robot pose: " << pose_msg->pose.pose.position.x << ", " << pose_msg->pose.pose.position.y
+                      << std::endl;
 
-        // TODO: publish drive message, don't forget to limit the steering angle.
-        drive_msg.drive.steering_angle = steering_angle;
-        drive_msg.drive.speed = GetSpeed(steering_angle);
-        if (no_waypoints) {
-            drive_msg.drive.speed = 0.0;
+            waypoint_visualizer.update_visualization(waypoints);
+
+            marker_pub->publish(waypoint_visualizer.current_waypoint);
+            goal_marker_pub->publish(waypoint_visualizer.goal_waypoint);
+            path_pub->publish(waypoint_visualizer.path_msg);
+
+            // TODO: transform goal point to vehicle frame of reference
+            geometry_msgs::msg::Pose current_pose = pose_msg->pose.pose;
+            double dx = curr_waypoint.first - current_pose.position.x;
+            double dy = curr_waypoint.second - current_pose.position.y;
+
+            tf2::Quaternion q(current_pose.orientation.x, current_pose.orientation.y, current_pose.orientation.z,
+                              current_pose.orientation.w);
+            tf2::Matrix3x3 m(q);
+            double roll, pitch, yaw;
+            /** @ref:
+             * https://www.formula1-dictionary.net/motions_of_f1_car.html
+             *  https://mecharithm.com/learning/lesson/explicit-representations-orientation-robotics-roll-pitch-yaw-angles-15
+             *  https://shuffleai.blog/blog/Three_Methods_of_Vehicle_Lateral_Control.html
+             */
+            m.getRPY(roll, pitch, yaw);
+
+            // double x_vehicle_frame = cos(yaw) * dx + sin(yaw) * dy;
+            double y_vehicle_frame = -sin(yaw) * dx + cos(yaw) * dy;
+
+            // TODO: calculate curvature/steering angle
+            double curvature = 2 * y_vehicle_frame / (lookahead_distance * lookahead_distance);
+            double steering_angle = curvature * 0.5;
+            if (steering_angle > M_PI / 2) {
+                steering_angle = M_PI / 2;
+            } else if (steering_angle < -M_PI / 2) {
+                steering_angle = -M_PI / 2;
+            }
+
+            // TODO: publish drive message, don't forget to limit the steering angle.
+            drive_msg.drive.steering_angle = steering_angle;
+            drive_msg.drive.speed = GetSpeed(steering_angle);
+            if (no_waypoints) {
+                drive_msg.drive.speed = 0.0;
+            }
+
+            ackermann_drive_pub->publish(drive_msg);
+            reach_last_waypoint = false;
         }
-
-        ackermann_drive_pub->publish(drive_msg);
     }
 
     ~PurePursuit() {}
+
+    bool reach_last_waypoint = false;
+    double placeholder = 1000.0;
+    std::pair<double, double> curr_waypoint_ = std::make_pair(placeholder, placeholder);
 };
 
 int main(int argc, char** argv) {
