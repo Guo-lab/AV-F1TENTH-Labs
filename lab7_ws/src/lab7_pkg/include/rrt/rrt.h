@@ -169,6 +169,12 @@ class RRT : public rclcpp::Node {
     std::uniform_real_distribution<> y_dist;
 
     nav_msgs::msg::OccupancyGrid occupancy_grid_;
+    int occupancy_grid_width_ = 400;
+    int occupancy_grid_height_ = 400; // 4 meters for the height
+    double occupancy_grid_resolution_ = 0.01; // 1 cm per cell, 100 cells in a meter
+    int x_offset_ = 0; // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1/4;
+    int y_offset_ = -1 * occupancy_grid_height_ * occupancy_grid_resolution_ * 1/2;
+
     geometry_msgs::msg::Pose robot_pose_;
     nav_msgs::msg::Odometry robot_odom_;
 

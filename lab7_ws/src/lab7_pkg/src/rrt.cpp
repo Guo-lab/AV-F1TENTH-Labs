@@ -27,17 +27,16 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
         scan_topic, 1, std::bind(&RRT::scan_callback, this, std::placeholders::_1));
 
     // TODO: create a occupancy grid
-    occupancy_grid_.header.frame_id = "map";
+    occupancy_grid_.header.frame_id = "ego_racecar/laser";
     occupancy_grid_.header.stamp = this->now();
 
-    occupancy_grid_.info.width = 800;  // 8 meters for the width
-    occupancy_grid_.info.height = 800;
-    occupancy_grid_.info.resolution = 0.05;  // 5 cm per cell, 10 cells in a meter
+    occupancy_grid_.info.width = occupancy_grid_width_;
+    occupancy_grid_.info.height = occupancy_grid_height_;
+    occupancy_grid_.info.resolution = occupancy_grid_resolution_;
 
-    occupancy_grid_.info.origin.position.x = -5.0;
-    occupancy_grid_.info.origin.position.y = -5.0;
+    occupancy_grid_.info.origin.position.x = x_offset_;
+    occupancy_grid_.info.origin.position.y = y_offset_;
     occupancy_grid_.info.origin.position.z = 0.0;
-
     occupancy_grid_.info.origin.orientation.x = 0.0;
     occupancy_grid_.info.origin.orientation.y = 0.0;
     occupancy_grid_.info.origin.orientation.z = 0.0;
@@ -50,9 +49,7 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
 
     // Load waypoints
     WaypointsReader waypoints_reader(waypoints);
-    if (!waypoints.empty()) {
-        no_waypoints_ = false;
-    }
+    if (!waypoints.empty()) no_waypoints_ = false;
     std::cout << "Waypoints loaded: " << waypoints.size() << std::endl;
 
     // Prepare for the coordination transformation
@@ -77,35 +74,24 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
     //    scan_msg (*LaserScan): pointer to the incoming scan message
     // Returns:
     //
-
-    /**
-     * occupancy_grid_.header.frame_id, robot_odom_.child_frame_id, 
-     *  and scan_msg->header.frame_id might be empty?
-     */
-
-    // Get the robot's pose in the map frame (actually the same here since robot odom has reference frame: map)
-    geometry_msgs::msg::TransformStamped base_to_map_transform;
-    try {
-        base_to_map_transform =
-            tf_buffer_->lookupTransform("map", "ego_racecar/base_link", rclcpp::Time(0), tf2::durationFromSec(1.0));
-    } catch (const tf2::TransformException& ex) {
-        RCLCPP_WARN(this->get_logger(), "Could not get transform from base_link to map: %s", ex.what());
-        return;
-    }
     occupancy_grid_.header.stamp = this->now();
-    occupancy_grid_.info.origin.position.x = base_to_map_transform.transform.translation.x -
-                                             (occupancy_grid_.info.width * occupancy_grid_.info.resolution) / 2;
-    occupancy_grid_.info.origin.position.y = base_to_map_transform.transform.translation.y -
-                                             (occupancy_grid_.info.height * occupancy_grid_.info.resolution) / 2;
-
+    occupancy_grid_.info.origin.position.x = x_offset_;
+    occupancy_grid_.info.origin.position.y = y_offset_;
+    occupancy_grid_.info.origin.position.z = 0.0;
+    occupancy_grid_.info.origin.orientation.x = 0.0;
+    occupancy_grid_.info.origin.orientation.y = 0.0;
+    occupancy_grid_.info.origin.orientation.z = 0.0;
+    occupancy_grid_.info.origin.orientation.w = 1.0;
     std::vector<int8_t> data(occupancy_grid_.info.width * occupancy_grid_.info.height, 50);
     occupancy_grid_.data = data;
 
     geometry_msgs::msg::TransformStamped laser_to_map_transform;
-    // std::cout << "Occupancy Grid Frame: " << occupancy_grid_.header.frame_id << std::endl;
     try {
-        laser_to_map_transform =
-            tf_buffer_->lookupTransform("map", "ego_racecar/laser", rclcpp::Time(0), tf2::durationFromSec(1.0));
+        /**
+         * occupancy_grid_.header.frame_id, robot_odom_.child_frame_id, and scan_msg->header.frame_id might be empty?
+         */
+        laser_to_map_transform = tf_buffer_->lookupTransform("ego_racecar/base_link", "ego_racecar/laser",
+                                                             rclcpp::Time(0), tf2::durationFromSec(1.0));
     } catch (const tf2::TransformException& ex) {
         RCLCPP_WARN(this->get_logger(), "Could not get transform from laser to map: %s", ex.what());
         return;
@@ -118,14 +104,13 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
         if (isnan(scan_ranges[i]) || isinf(scan_ranges[i])) {
             continue;
         }
-        double each_angle = scan_msg->angle_min + i * scan_msg->angle_increment;
         double each_range = scan_msg->ranges[i];
 
-        double laser_x = each_range * std::cos(each_angle);
-        double laser_y = each_range * std::sin(each_angle);
+        double laser_x = each_range * std::cos(scan_msg->angle_min + i * scan_msg->angle_increment);
+        double laser_y = each_range * std::sin(scan_msg->angle_min + i * scan_msg->angle_increment);
 
         geometry_msgs::msg::PointStamped laser_point;
-        laser_point.header.frame_id = scan_msg->header.frame_id;
+        laser_point.header.frame_id = "ego_racecar/laser";
         laser_point.point.x = laser_x;
         laser_point.point.y = laser_y;
         laser_point.point.z = 0.0;
@@ -141,9 +126,16 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
         int grid_x = (map_point.point.x - occupancy_grid_.info.origin.position.x) / occupancy_grid_.info.resolution;
         int grid_y = (map_point.point.y - occupancy_grid_.info.origin.position.y) / occupancy_grid_.info.resolution;
 
-        if (grid_x >= 0 && grid_x < (int)occupancy_grid_.info.width && grid_y >= 0 &&
-            grid_y < (int)occupancy_grid_.info.height) {
-            int index = grid_y * occupancy_grid_.info.width + grid_x;
+        int width = occupancy_grid_.info.width;
+        int height = occupancy_grid_.info.height;
+
+        if (grid_x >= 0 && grid_x < width && grid_y >= 0 && grid_y < height) {
+            int index = grid_y * occupancy_grid_width_ + grid_x;
+
+            if (index >= (int)occupancy_grid_.data.size()) {
+                continue;
+            }
+
             if (each_range < scan_msg->range_max && each_range > scan_msg->range_min) {
                 occupancy_grid_.data[index] = 100;
             } else {
@@ -153,7 +145,6 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
     }
 
     occupancy_grid_pub_->publish(occupancy_grid_);
-    std::cout << "Occupancy grid updated" << std::endl;
 }
 
 void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) {
@@ -163,10 +154,11 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
     //    pose_msg (*PoseStamped): pointer to the incoming pose message
     // Returns:
     //
+
     robot_pose_ = pose_msg->pose.pose;
     robot_odom_ = *pose_msg;
 
-    /** =============== Waypoints Fetching ============== */
+    // /** =============== Waypoints Fetching ============== */
     if (no_waypoints_) return;
 
     // tree as std::vector
@@ -188,40 +180,38 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
     bool if_path_found = false;
     timer_node_->GetCurrentTime();
 
-    while (!if_path_found) {
+    // while (!if_path_found) {
+    //     if (timer_node_->Timeout()) {
+    //         RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Time out, no path found.");
+    //         break;
+    //     }
+    //     std::vector<double> sampled_points = sample();
 
-        if (timer_node_->Timeout()) {
-            RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Time out, no path found.");
-            break;
-        }
-        std::vector<double> sampled_points = sample();
+    //     int nearest_node_idx = nearest(tree, sampled_points);
+    //     RRT_Node nearest_node = tree[nearest_node_idx];
 
-        int nearest_node_idx = nearest(tree, sampled_points);
-        RRT_Node nearest_node = tree[nearest_node_idx];
+    //     RRT_Node new_node = steer(nearest_node, sampled_points);
 
-        RRT_Node new_node = steer(nearest_node, sampled_points);
+    //     if (!check_collision(nearest_node, new_node)) {
+    //         tree.push_back(new_node);
 
-        if (!check_collision(nearest_node, new_node)) {
-            tree.push_back(new_node);
+    //         if (is_goal(new_node, waypoints[0].first, waypoints[0].second)) {
+    //             timer_node_->GetCurrentTime();
+    //             if_path_found = true;
+    //             std::vector<RRT_Node> path = find_path(tree, new_node);
 
-            if (is_goal(new_node, waypoints[0].first, waypoints[0].second)) {
-                
-                timer_node_->GetCurrentTime();
-                if_path_found = true;
-                std::vector<RRT_Node> path = find_path(tree, new_node);
+    //             // actuator(path);
 
-                // actuator(path);
-                
-                // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Path found");
-                std::cout << path.size() << std::endl;
-                
-                // waypoint_visualizer.update_visualization(path);
-                // path_pub_->publish(waypoint_visualizer.path_msg);
-            }
-        }
+    //             // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Path found");
+    //             std::cout << path.size() << std::endl;
 
-        // std::cout << "Tree size: " << tree.size() << std::endl;
-    }
+    //             waypoint_visualizer.update_visualization(path);
+    //             path_pub_->publish(waypoint_visualizer.path_msg);
+    //         }
+    //     }
+
+    //     // std::cout << "Tree size: " << tree.size() << std::endl;
+    // }
 
     // path found as Path message
 }
