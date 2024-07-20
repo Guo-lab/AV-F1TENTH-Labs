@@ -25,7 +25,9 @@ foreach(PACKAGE
   Eigen3
   tf2
   tf2_geometry_msgs
-  tf2_ros)
+  tf2_ros
+  cv_bridge
+  image_transport)
 
   find_package(${PACKAGE} REQUIRED)
 
@@ -41,7 +43,7 @@ include_directories(
 add_executable(rrt_node src/rrt_node.cpp src/rrt.cpp)
 
 ament_target_dependencies(rrt_node 
-  rclcpp geometry_msgs ackermann_msgs nav_msgs sensor_msgs std_msgs visualization_msgs tf2_ros tf2 tf2_geometry_msgs
+  rclcpp geometry_msgs ackermann_msgs nav_msgs sensor_msgs std_msgs visualization_msgs tf2_ros tf2 tf2_geometry_msgs cv_bridge image_transport
 )
 
 # Install Cpp executables
@@ -55,6 +57,7 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/rrt_node.py
+  scripts/waypoints_logging.py
   DESTINATION lib/${PROJECT_NAME}
 )
 

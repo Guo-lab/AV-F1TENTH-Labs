@@ -66,3 +66,5 @@ lab9_ws/build
 
 sim_ws
 f1tenth_gym
+
+lab7_ws/src/lab7_pkg/data/*.csv
