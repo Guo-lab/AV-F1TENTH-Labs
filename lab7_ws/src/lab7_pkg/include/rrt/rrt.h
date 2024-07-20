@@ -48,7 +48,7 @@ class TimeNode : public rclcpp::Node {
         current_time = clock_->now().seconds();
         prev_time = current_time;
     }
-    auto Timeout() -> bool { return clock_->now().seconds() - prev_time > 10.0; }
+    auto Timeout() -> bool { return clock_->now().seconds() - prev_time > 20.0; }
 
    private:
     rclcpp::Clock::SharedPtr clock_;
@@ -115,9 +115,11 @@ class WaypointVisualizer {
     nav_msgs::msg::Path path_msg;
     visualization_msgs::msg::MarkerArray tree_msg;
     visualization_msgs::msg::Marker current_waypoint;
+    
+    std::vector<RRT_Node> path_to_visualize;
 
    private:
-    std::vector<RRT_Node> path_to_visualize;
+
     std::vector<RRT_Node> tree_to_visualize;
 
     void visualize_waypoints() {
@@ -212,92 +214,10 @@ class WaypointVisualizer {
         }
         marker_array.markers.push_back(nodes_marker);
         marker_array.markers.push_back(edges_marker);
+
         tree_msg = marker_array;
     }
 };
-
-// class RRT : public rclcpp::Node {
-//    public:
-//     RRT();
-//     virtual ~RRT();
-
-//    private:
-//     ackermann_msgs::msg::AckermannDriveStamped drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
-
-//     // TODO: add the publishers and subscribers you need
-
-//     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
-//     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
-
-//     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_drive_pub;
-//     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_pub_;
-//     rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
-//     rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr tree_pub_;
-//     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
-//     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr goal_marker_pub;
-
-//     std::shared_ptr<TimeNode> timer_node_ = std::make_shared<TimeNode>();
-
-//     string pose_topic = "/ego_racecar/odom";
-//     string scan_topic = "/scan";
-//     string drive_topic = "/drive";
-//     string occupancy_grid_topic = "/local_occupancy_grid";
-//     string path_topic = "/path";
-//     string tree_topic = "/tree";
-
-//     // random generator, use this
-//     std::mt19937 gen;
-//     std::uniform_real_distribution<> x_dist;
-//     std::uniform_real_distribution<> y_dist;
-
-//     nav_msgs::msg::OccupancyGrid occupancy_grid_;
-//     int occupancy_grid_width_ = 80;
-//     int occupancy_grid_height_ = 80;           // 4 meters for the height
-//     double occupancy_grid_resolution_ = 0.05;  // 5 cm per cell, 100 cells in a meter
-//     int x_offset_ = 0;                         // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1/4;
-//     int y_offset_ = -1 * occupancy_grid_height_ * occupancy_grid_resolution_ * 1 / 2;
-
-//     geometry_msgs::msg::Pose robot_pose_;
-//     nav_msgs::msg::Odometry robot_odom_;
-
-//     std::vector<std::pair<double, double>> waypoints;
-//     WaypointVisualizer waypoint_visualizer;
-
-//     std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
-//     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
-
-//     // RRT variables
-//     bool no_waypoints_ = true;
-//     double max_expansion_dist_ = 0.5f;
-//     double goal_threshold_ = 0.15f;
-
-//     // callbacks
-//     // where rrt actually happens
-//     void brake_vehicle();
-//     void pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg);
-
-//     void dilate_to_configuration_space();
-//     // updates occupancy grid
-//     void scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
-
-//     // RRT methods
-//     std::vector<double> sample();
-//     int nearest(std::vector<RRT_Node>& tree, std::vector<double>& sampled_point);
-//     RRT_Node steer(RRT_Node& nearest_node, std::vector<double>& sampled_point);
-
-//     bool check_collision(RRT_Node& nearest_node, RRT_Node& new_node);
-//     bool line_of_sight(int max_iter, int x0, int y0, int x1, int y1, int err, int dx, int dy, int sx, int sy);
-//     bool is_goal(RRT_Node& latest_added_node, double goal_x, double goal_y);
-//     std::vector<RRT_Node> find_path(std::vector<RRT_Node>& tree, RRT_Node& latest_added_node);
-
-//     auto get_speed_based_on_angle(double steering_angle) -> double;
-//     void actuator(std::vector<RRT_Node>& path);
-
-//     // RRT* methods
-//     double cost(std::vector<RRT_Node>& tree, RRT_Node& node);
-//     double line_cost(RRT_Node& n1, RRT_Node& n2);
-//     std::vector<int> near(std::vector<RRT_Node>& tree, RRT_Node& node);
-// };
 
 class RRT : public rclcpp::Node {
    public:
@@ -305,114 +225,82 @@ class RRT : public rclcpp::Node {
     virtual ~RRT();
 
    private:
-    // add the publishers and subscribers you need
+    ackermann_msgs::msg::AckermannDriveStamped drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
+
+    // TODO: add the publishers and subscribers you need
 
     rclcpp::Subscription<nav_msgs::msg::Odometry>::SharedPtr pose_sub_;
     rclcpp::Subscription<sensor_msgs::msg::LaserScan>::SharedPtr scan_sub_;
 
-    // add drive publisher
-    rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
-
-    // add path publisher for debug
-    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
-
-    // add point publisher for debug
-    rclcpp::Publisher<geometry_msgs::msg::PointStamped>::SharedPtr point_pub_;
-
-    // add processed laser publisher for debug
-    rclcpp::Publisher<sensor_msgs::msg::LaserScan>::SharedPtr processed_scan_pub_;
-
-    // add occupancy grid publisher for debug
+    rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr ackermann_drive_pub;
     rclcpp::Publisher<nav_msgs::msg::OccupancyGrid>::SharedPtr occupancy_grid_pub_;
+    rclcpp::Publisher<nav_msgs::msg::Path>::SharedPtr path_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr tree_pub_;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
+    rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr goal_marker_pub;
 
-    // add visualization marker array publisher for debug
-    rclcpp::Publisher<visualization_msgs::msg::MarkerArray>::SharedPtr vis_marker_array_pub_;
+    std::shared_ptr<TimeNode> timer_node_ = std::make_shared<TimeNode>();
+
+    string pose_topic = "/ego_racecar/odom";
+    string scan_topic = "/scan";
+    string drive_topic = "/drive";
+    string occupancy_grid_topic = "/local_occupancy_grid";
+    string path_topic = "/path";
+    string tree_topic = "/tree";
+
+    string goal_frame_id = "map";
+    string robot_frame_id = "ego_racecar/base_link";
+    string laser_frame_id = "ego_racecar/laser";
 
     // random generator, use this
     std::mt19937 gen;
-    std::uniform_real_distribution<> sample_type;
     std::uniform_real_distribution<> x_dist;
     std::uniform_real_distribution<> y_dist;
 
-    // constants for laser properties
-    const double PI = 3.1415926536;
-    const double angle_min = -2.3499999046325684;
-    const double angle_max = 2.3499999046325684;
-    const double angle_increment = 0.004351851996034384;
+    nav_msgs::msg::OccupancyGrid occupancy_grid_;
+    int occupancy_grid_width_ = 100;
+    int occupancy_grid_height_ = 100;           // 4 meters for the height
+    double occupancy_grid_resolution_ = 0.04;  // 2 cm per cell, 100 cells in a meter
+    int x_offset_ = 0; // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1 / 2;                         // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1/4;
+    int y_offset_ = -1 * occupancy_grid_height_ * occupancy_grid_resolution_ * 1 / 2;
 
-    // constants for tree expansion status
-    const int TRAPPED = 0;
-    const int ADVANCED = 1;
-    const int REACHED = 2;
+    geometry_msgs::msg::Pose robot_pose_;
+    nav_msgs::msg::Odometry robot_odom_;
 
-    // parameters for RRT
-    int num_of_samples;
-    double look_ahead_dist;
-    double step_size;
-    double goal_sample_rate;
-    double angle_sample_range;
-    double safety_padding;
-    double disparity_extend_range;
-    std::string waypoint_file_path;
-    std::string waypoint_frame_id;
-    std::string pose_to_listen;
+    std::vector<std::pair<double, double>> waypoints;
+    WaypointVisualizer waypoint_visualizer;
 
-    // define transform from/to frames and waypoint index
-    std::string fromFrame;
-    std::string toFrame;
-    int last_waypoint_index;
-
-    // define last heading angle
-    double last_heading;
-
-    // listener to listen updates on pose_to_listen
-    std::unique_ptr<tf2_ros::Buffer> tf_buffer_;
+    std::shared_ptr<tf2_ros::Buffer> tf_buffer_;
     std::shared_ptr<tf2_ros::TransformListener> tf_listener_;
 
-    // data structure to store
-    // - path file
-    // - path
-    // - occupancy grid
-    // - rrt visualization
-    ifstream waypoint_file;
-    nav_msgs::msg::Path path_msg;
-    int path_length;
-    nav_msgs::msg::OccupancyGrid rrt_grid;
-    visualization_msgs::msg::MarkerArray rrt_marks;
-    int marker_id;
-
-    // parameters used for occupancy grid
-    int grid_width;
-    int grid_height;
-    double grid_resolution;
-
-    // vector for processed laser scan
-    std::vector<float> processed_scan;
+    // RRT variables
+    double max_expansion_dist_ = 1.0f;
+    double goal_threshold_ = 0.15f;
 
     // callbacks
     // where rrt actually happens
+    void brake_vehicle();
     void pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg);
+
+    void dilate_to_configuration_space();
     // updates occupancy grid
     void scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_msg);
 
     // RRT methods
-    std::vector<double> sample(std::vector<double>& goal, bool goal_status);
+    std::vector<double> sample();
     int nearest(std::vector<RRT_Node>& tree, std::vector<double>& sampled_point);
-    int extend(std::vector<RRT_Node>& tree, int nearest_node_index, std::vector<double>& sampled_point,
-               std::vector<double>& goal_point, bool goal_status);
+    RRT_Node steer(RRT_Node& nearest_node, std::vector<double>& sampled_point);
+
     bool check_collision(RRT_Node& nearest_node, RRT_Node& new_node);
-    bool is_goal(RRT_Node& latest_added_node, std::vector<double>& goal_point, bool goal_status);
+    bool line_of_sight(int max_iter, int x0, int y0, int x1, int y1, int err, int dx, int dy, int sx, int sy);
+    bool is_goal(RRT_Node& latest_added_node, double goal_x, double goal_y);
     std::vector<RRT_Node> find_path(std::vector<RRT_Node>& tree, RRT_Node& latest_added_node);
+
+    auto get_speed_based_on_angle(double steering_angle) -> double;
+    void actuator(std::vector<RRT_Node>& path);
+
     // RRT* methods
     double cost(std::vector<RRT_Node>& tree, RRT_Node& node);
     double line_cost(RRT_Node& n1, RRT_Node& n2);
     std::vector<int> near(std::vector<RRT_Node>& tree, RRT_Node& node);
-
-    // helper functions
-    void log_waypoints();
-    void find_goal_point(std::vector<double>& goal_point);
-    void interpolate_points(double x1, double y1, double x2, double y2, std::vector<double>& goal_point);
-    double euclidean_dist(double x, double y);
-    void process_scan(std::vector<float>& scan);
-    void init_grid();
 };
