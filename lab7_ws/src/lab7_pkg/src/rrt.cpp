@@ -4,6 +4,12 @@
 
 #include "rrt/rrt.h"
 
+/**
+ * @brief helper function to calculate the euclidean distance between two points
+ *
+ * @param p1 point in a pair containing x and y position
+ * @param p2 the second point in a pair containing x and y position
+ */
 auto inline euclidean_distance(const pair<double, double>& p1, const pair<double, double>& p2) -> double {
     return sqrt(pow(p1.first - p2.first, 2) + pow(p1.second - p2.second, 2));
 }
@@ -24,8 +30,8 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
     path_pub_ = this->create_publisher<nav_msgs::msg::Path>(path_topic, 1);
     tree_pub_ = this->create_publisher<visualization_msgs::msg::MarkerArray>(tree_topic, 1);
 
-    marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("visualization_marker", 1);
-    goal_marker_pub = this->create_publisher<visualization_msgs::msg::Marker>("goal_marker", 1);
+    marker_pub = this->create_publisher<visualization_msgs::msg::Marker>(visualization_marker_topic, 1);
+    goal_marker_pub = this->create_publisher<visualization_msgs::msg::Marker>(goal_marker_topic, 1);
 
     // ROS subscribers
     // TODO: create subscribers as you need
@@ -35,7 +41,7 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
         scan_topic, 1, std::bind(&RRT::scan_callback, this, std::placeholders::_1));
 
     // TODO: create a occupancy grid
-    occupancy_grid_.header.frame_id = "ego_racecar/base_link";
+    occupancy_grid_.header.frame_id = robot_frame_id;
     occupancy_grid_.header.stamp = this->now();
 
     occupancy_grid_.info.width = occupancy_grid_width_;
@@ -51,13 +57,14 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
     occupancy_grid_.info.origin.orientation.z = 0.0;
     occupancy_grid_.info.origin.orientation.w = 1.0;
 
-    std::vector<int8_t> data(occupancy_grid_.info.width * occupancy_grid_.info.height, 0);
+    std::vector<int8_t> data(occupancy_grid_.info.width * occupancy_grid_.info.height, obstacle_free_cost_);
     occupancy_grid_.data = data;
 
     occupancy_grid_pub_->publish(occupancy_grid_);
 
     // Load waypoints
     WaypointsReader waypoints_reader(waypoints);
+    RCLCPP_INFO_STREAM(rclcpp::get_logger("RRT"), "Loaded " << waypoints.size() << " waypoints.");
 
     // Prepare for the coordination transformation
     tf_buffer_ = std::make_shared<tf2_ros::Buffer>(this->get_clock());
@@ -68,16 +75,16 @@ RRT::RRT() : rclcpp::Node("rrt_node"), gen((std::random_device())()) {
 
 /**
  * @brief dilate the occupancy grid from the workspace to configuration space
+ *  With opencv2, thicken the obstacles
  */
 void RRT::dilate_to_configuration_space() {
     cv::Mat map_mat =
         cv::Mat(this->occupancy_grid_height_, this->occupancy_grid_width_, CV_8U, occupancy_grid_.data.data()).clone();
 
     // Perform dilation or any other desired operation to thicken obstacles
-    int robot_radius = 5;
     cv::Mat dilated_map;
 
-    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2 * robot_radius + 1, 2 * robot_radius + 1));
+    cv::Mat element = cv::getStructuringElement(cv::MORPH_RECT, cv::Size(2 * robot_radius_ + 1, 2 * robot_radius_ + 1));
     cv::dilate(map_mat, dilated_map, element);
 
     // Convert back to std::vector<int8_t>
@@ -87,11 +94,10 @@ void RRT::dilate_to_configuration_space() {
 
 /**
  * @brief Callback function for the laser scan message, which will be used to update the occupancy grid.
- *  Occupancy grid should attach to the robot. Thus, here there is also a transformation from the the robot odom
- frame
- *      to the map frame. Finally, the grid will be together with the robot.
- *  Traverse all laser points. For each scan laser point, convert the them from their laser frame to the global map
- *      frame.
+ *  Occupancy grid should attach to the robot. Thus, the grid will be together with the robot in the robot's reference
+ * frame.
+ *  Traverse all laser points. For each scan laser point, convert the them from their laser frame to the global
+ * map frame. Based on these scna points, finding the obstacles and updating the local planner's map (occupancy grid)
  *
  * @param scan_msg The incoming laser scan message
  */
@@ -101,8 +107,6 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
     //    scan_msg (*LaserScan): pointer to the incoming scan message
     // Returns:
     //
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Scan callback");
-
     occupancy_grid_.header.stamp = this->now();
 
     occupancy_grid_.info.origin.position.x = x_offset_;
@@ -113,11 +117,14 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
     occupancy_grid_.info.origin.orientation.z = 0.0;
     occupancy_grid_.info.origin.orientation.w = 1.0;
 
-    occupancy_grid_.data.assign(occupancy_grid_width_ * occupancy_grid_height_, 0);
+    occupancy_grid_.data.assign(occupancy_grid_width_ * occupancy_grid_height_, obstacle_free_cost_);
 
     geometry_msgs::msg::TransformStamped laser_to_map_transform;
     try {
-        /** occupancy_grid_.header.frame_id, robot_odom_.child_frame_id, & scan_msg->header.frame_id might be empty? */
+        /**
+         * occupancy_grid_.header.frame_id, robot_odom_.child_frame_id, & scan_msg->header.frame_id might be empty?
+         * so here use the static parameters
+         */
         laser_to_map_transform =
             tf_buffer_->lookupTransform(robot_frame_id, laser_frame_id, rclcpp::Time(0), tf2::durationFromSec(0.25));
     } catch (const tf2::TransformException& ex) {
@@ -163,7 +170,7 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
                 continue;
             }
             if (each_range < scan_msg->range_max && each_range > scan_msg->range_min) {
-                occupancy_grid_.data[index] = 100;
+                occupancy_grid_.data[index] = obstacle_cost_;
             }
         }
     }
@@ -171,6 +178,10 @@ void RRT::scan_callback(const sensor_msgs::msg::LaserScan::ConstSharedPtr scan_m
     occupancy_grid_pub_->publish(occupancy_grid_);
 }
 
+/**
+ * @brief Brake the vehicle by setting the speed and steering angle to zero
+ *  As a helper function, it only be called as AEB, rrt ending, or rrt timeout
+ */
 void RRT::brake_vehicle() {
     drive_msg.drive.steering_angle = 0.0;
     drive_msg.drive.speed = 0.0;
@@ -178,6 +189,18 @@ void RRT::brake_vehicle() {
     ackermann_drive_pub->publish(drive_msg);
 }
 
+/**
+ * @brief Callback function for the pose message, which will be used to update the robot's pose and run the RRT
+ * algorithm
+ *
+ * In the RRT, before timeout, or path not found; rrt will sample the points around the robot, find the nearest point on
+ * the tree to the sampled point, and steer the tree towards the sampled point if that sampled points is accessible.
+ *
+ * When finding a path on the tree to the waypoint, the robot will visualize the tree and path, and actuator will use
+ * pure pursuit to drive the robot based on the path provided by the RRT.
+ *
+ * @param pose_msg The incoming pose message
+ */
 void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) {
     // The pose callback when subscribed to particle filter's inferred pose
     // The RRT main loop happens here
@@ -185,73 +208,44 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
     //    pose_msg (*PoseStamped): pointer to the incoming pose message
     // Returns:
     //
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Pose callback");
     robot_pose_ = pose_msg->pose.pose;
     robot_odom_ = *pose_msg;
 
-    // /** =============== Waypoints Fetching ============== */
+    /** ==================== Waypoints Fetching =================== */
     if (waypoints.empty()) {
         brake_vehicle();
         return;
     }
 
+    /** ======== Checking if the robot reaches any waypoints ======= */
     std::pair<double, double> curr_wp = waypoints.front();
     while (euclidean_distance(curr_wp, std::make_pair(robot_pose_.position.x, robot_pose_.position.y)) <
-           goal_threshold_ * 4) {
+           goal_reached_threshold_) {
         RCLCPP_INFO(rclcpp::get_logger("RRT"), "Reached waypoint: %f, %f\n", curr_wp.first, curr_wp.second);
 
         waypoints.erase(waypoints.begin());
-        // std::cout << "Could this be the issue?" << std::endl;
         if (waypoints.empty()) {
             brake_vehicle();
             return;
         }
-        // std::cout << "Could 2 this be the issue?" << std::endl;
         curr_wp = waypoints.front();
-        // std::cout << "Could 3 this be the issue?" << std::endl;
     }
 
-    visualization_msgs::msg::Marker goal_waypoint;
-    goal_waypoint.lifetime = rclcpp::Duration::from_seconds(0.5);
-    goal_waypoint.type = visualization_msgs::msg::Marker::CYLINDER;
-    goal_waypoint.action = visualization_msgs::msg::Marker::ADD;
-    goal_waypoint.id = 0;
-    goal_waypoint.scale.x = 0.2;
-    goal_waypoint.scale.y = 0.2;
-    goal_waypoint.scale.z = 0.5;
-    goal_waypoint.color.g = 0.0f;
-    goal_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
-    goal_waypoint.color.r = 1.0;
-    goal_waypoint.color.b = 0.0;
-    goal_waypoint.header.frame_id = "map";
-    goal_waypoint.pose.position.z = 0;
-    goal_waypoint.pose.position.x = waypoints.back().first;
-    goal_waypoint.pose.position.y = waypoints.back().second;
-    goal_marker_pub->publish(goal_waypoint);
+    waypoint_visualizer.visualize_goal(waypoints.back().first, waypoints.back().second);
+    goal_marker_pub->publish(waypoint_visualizer.goal_waypoint);
 
     // tree as std::vector
     std::vector<RRT_Node> tree;
     tree.clear();
-    // std::cout << "Tree free" << std::endl;
 
-    /** =================  RRT Building  ================= */
+    /** ========================  RRT Building  ===================== */
     RRT_Node root{robot_pose_.position.x, robot_pose_.position.y, 0, -1, true};
     tree.push_back(root);
 
-    // std::cout << "OH, if root is the goal?" << std::endl;
-
     // TODO: fill in the RRT main loop
-    timer_node_->SetCurrentTime();
     bool if_path_found = false;
     while (!if_path_found) {
-        // if (timer_node_->Timeout()) {
-        //     RCLCPP_WARN(rclcpp::get_logger("RRT"), "%s\n", "Time out, no path found.");
-
-        //     brake_vehicle();
-        //     break;
-        // }
-        int max_tree_size_ = 300000;
-        if (tree.size() > max_tree_size_) {
+        if (tree.size() > max_tree_size_) {  // including the timeout cases
             RCLCPP_WARN(rclcpp::get_logger("RRT"), "%s\n", "Tree size exceeds the maximum size.");
             brake_vehicle();
             break;
@@ -260,9 +254,7 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
         std::vector<double> sampled_points = sample();
 
         int nearest_node_idx = nearest(tree, sampled_points);
-
         RRT_Node nearest_node = tree[nearest_node_idx];
-
         RRT_Node new_node = steer(nearest_node, sampled_points);
 
         if (!check_collision(nearest_node, new_node)) {
@@ -270,11 +262,9 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
             tree.push_back(new_node);
 
             if (is_goal(new_node, curr_wp.first, curr_wp.second)) {
-                timer_node_->SetCurrentTime();
                 if_path_found = true;
 
                 std::vector<RRT_Node> path = find_path(tree, new_node);
-                // std::cout << path.size() << std::endl;
 
                 waypoint_visualizer.update_visualization(path, tree);
                 path_pub_->publish(waypoint_visualizer.path_msg);
@@ -282,16 +272,12 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
                 tree_pub_->publish(waypoint_visualizer.tree_msg);
                 marker_pub->publish(waypoint_visualizer.current_waypoint);
 
-                // std::cout << "publish path" << std::endl;
-
                 actuator(path);
-                // std::cout << "pure pursuit..." << std::endl;
             }
-            // std::cout << "Tree size: " << tree.size() << std::endl;
         } else {
+            // RRT's tree growth
             waypoint_visualizer.update_visualization(waypoint_visualizer.path_to_visualize, tree);
             tree_pub_->publish(waypoint_visualizer.tree_msg);
-            // std::cout << "Tree size: " << tree.size() << std::endl;
         }
     }
 
@@ -303,14 +289,19 @@ void RRT::pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr pose_msg) 
  *                                     RRT methods
  * ================================================================================================
  */
+
+/**
+ * @brief Sample a point in the free space.
+ *
+ * What's noteworthy is that the sample point should be within a small region of interest around the car's current
+ * position. Besides, its in the global map frame.
+ */
 std::vector<double> RRT::sample() {
     // This method returns a sampled point from the free space
     // You should restrict so that it only samples a small region of interest around the car's current position
     // Args:
     // Returns:
     //     sampled_point (std::vector<double>): the sampled point in free space
-
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Sampling point");
 
     std::vector<double> sampled_point;
 
@@ -332,12 +323,12 @@ std::vector<double> RRT::sample() {
     sampled_point.push_back(robot_pose_.position.x + x_dist(gen));
     sampled_point.push_back(robot_pose_.position.y + y_dist(gen));
 
-    // std::cout << occupancy_grid_.info.origin.position.x << " "<< occupancy_grid_.info.origin.position.y << std::endl;
-    // std::cout << robot_pose_.position.x << " "<< robot_pose_.position.y << std::endl;
-
     return sampled_point;
 }
 
+/**
+ * @brief Find the nearest node on the tree to the sampled point
+ */
 int RRT::nearest(std::vector<RRT_Node>& tree, std::vector<double>& sampled_point) {
     // This method returns the nearest node on the tree to the sampled point
     // Args:
@@ -351,8 +342,8 @@ int RRT::nearest(std::vector<RRT_Node>& tree, std::vector<double>& sampled_point
 
     // TODO: fill in this method
     for (int i = 0; i < (int)tree.size(); i++) {
-        double distance =
-            std::sqrt(std::pow(tree[i].x - sampled_point[0], 2) + std::pow(tree[i].y - sampled_point[1], 2));
+        double distance = euclidean_distance(std::make_pair(tree[i].x, tree[i].y),
+                                             std::make_pair(sampled_point[0], sampled_point[1]));
         if (distance < min_dist) {
             nearest_node = i;
             min_dist = distance;
@@ -362,20 +353,22 @@ int RRT::nearest(std::vector<RRT_Node>& tree, std::vector<double>& sampled_point
     return nearest_node;
 }
 
+/**
+ * @brief Steer the tree towards the sampled point:
+ *  truncate the edge from tree to the sampled node in the tree to the max expansion distance if this edge is too long.
+ */
 RRT_Node RRT::steer(RRT_Node& nearest_node, std::vector<double>& sampled_point) {
     // The function steer:(x,y)->z returns a point such that z is “closer” to y than x is.
     // The point z returned by the function steer will be such that z minimizes ||z−y|| while at the same time
     // maintaining ||z−x|| <= max_expansion_dist,
-    // for a prespecified max_expansion_dist > 0 basically, expand the tree towards the sample point (within a max
-    // dist)
+    // for a prespecified max_expansion_dist > 0 basically, expand the tree towards the sample point
+    // (within a max dist)
 
     // Args:
     //    nearest_node (RRT_Node): nearest node on the tree to the sampled point
     //    sampled_point (std::vector<double>): the sampled point in free space
     // Returns:
     //    new_node (RRT_Node): new node created from steering
-
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", "Steering");
 
     RRT_Node new_node;
 
@@ -396,17 +389,24 @@ RRT_Node RRT::steer(RRT_Node& nearest_node, std::vector<double>& sampled_point) 
     return new_node;
 }
 
+/**
+ * @brief helper function to check if there are obstacle on the line from sampled point to the tree.
+ *  Using Bresenham's line algorithm.
+ */
 bool RRT::line_of_sight(int max_iter, int x0, int y0, int x1, int y1, int err, int dx, int dy, int sx, int sy) {
     for (int i = 0; i < max_iter; i++) {
         int tmp_idx = y0 * (int)occupancy_grid_.info.width + x0;
         if (tmp_idx >= (int)occupancy_grid_.data.size()) {
             return false;
         }
-        if (occupancy_grid_.data[tmp_idx] == 100) {
+
+        if (occupancy_grid_.data[tmp_idx] == obstacle_cost_) {
             return false;
         }
 
-        if (x0 == x1 && y0 == y1) return true;
+        if (x0 == x1 && y0 == y1) {
+            return true;
+        }
 
         int e2 = 2 * err;
         if (e2 > -dy) err -= dy;
@@ -418,6 +418,14 @@ bool RRT::line_of_sight(int max_iter, int x0, int y0, int x1, int y1, int err, i
     return false;
 }
 
+/**
+ * @brief check_collision:
+ *  Check if the path between the nearest node and the new node created from steering is collision free
+ *  The points based on the global map frame should be transformed to the base_link robot's frame as the occupancy grid
+ * is in that frame.'
+ *
+ * If not doing so. mismatching the reference frame cause the robot crashing. (several hours to fix this bug)
+ */
 bool RRT::check_collision(RRT_Node& nearest_node, RRT_Node& new_node) {
     // This method returns a boolean indicating if the path between the nearest node and the new node created from
     // steering is collision free
@@ -478,7 +486,6 @@ bool RRT::check_collision(RRT_Node& nearest_node, RRT_Node& new_node) {
 
     collision = !line_of_sight(max_iter_step, x0, y0, x1, y1, err, dx, dy, sx, sy);
 
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "%s\n", collision ? "Collision" : "No collision");
     return collision;
 }
 
@@ -494,8 +501,8 @@ bool RRT::is_goal(RRT_Node& latest_added_node, double goal_x, double goal_y) {
 
     bool close_enough = false;
     // TODO: fill in this method
-    double distance = std::sqrt(std::pow(latest_added_node.x - goal_x, 2) + std::pow(latest_added_node.y - goal_y, 2));
-    // RCLCPP_INFO(rclcpp::get_logger("RRT"), "Distance to goal: %f\n", distance);
+    double distance =
+        euclidean_distance(std::make_pair(latest_added_node.x, latest_added_node.y), std::make_pair(goal_x, goal_y));
 
     if (distance < goal_threshold_) {
         close_enough = true;
@@ -528,6 +535,10 @@ std::vector<RRT_Node> RRT::find_path(std::vector<RRT_Node>& tree, RRT_Node& late
     return found_path;
 }
 
+/**
+ * @brief get_speed_based_on_angle:
+ *  The speed is based on the steering angle. The larger the steering angle, the slower the speed.
+ */
 auto RRT::get_speed_based_on_angle(double steering_angle) -> double {
     double abs_angle = std::abs(steering_angle);
     if (abs_angle >= 0.0 * (M_PI / 180.0) && abs_angle <= 5.0 * (M_PI / 180.0)) {
@@ -542,6 +553,10 @@ auto RRT::get_speed_based_on_angle(double steering_angle) -> double {
     return 0.3;
 }
 
+/**
+ * @brief actuator: which will use pure pursuit to drive the robot based on the path provided by the RRT
+ *  Here just using the first sub waypoint givne by the path.
+ */
 void RRT::actuator(std::vector<RRT_Node>& path) {
     // This method publishes the path as a series of waypoints to the path topic
     // Args:
@@ -567,10 +582,7 @@ void RRT::actuator(std::vector<RRT_Node>& path) {
     double curvature = 2 * y_vehicle_frame / (next_rrt_node_dist * next_rrt_node_dist);
     double steering_angle = curvature * 0.5;
 
-    // RRT_Node steering_node = path[1];
-    // double steering_angle = atan2(steering_node.y, steering_node.x);
-    // double velocity = 0.25 + 1 / (steering_angle + 2);
-
+    // postprocess the steering angle
     steering_angle = fmod(steering_angle, M_PI);
 
     double clip_angle = 90 * M_PI / 180;

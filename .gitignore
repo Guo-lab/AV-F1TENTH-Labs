@@ -67,4 +67,7 @@ lab9_ws/build
 sim_ws
 f1tenth_gym
 
+lab6_ws/src/lab6_pkg/data/*.csv
+!lab6_ws/src/lab6_pkg/data/waypoints.csv
 lab7_ws/src/lab7_pkg/data/*.csv
+!lab7_ws/src/lab7_pkg/data/waypoints.csv

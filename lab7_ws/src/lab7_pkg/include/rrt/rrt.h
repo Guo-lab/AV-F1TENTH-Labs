@@ -16,7 +16,6 @@
 #include <fstream>
 #include <image_transport/image_transport.hpp>
 #include <iostream>
-#include <nav_msgs/msg/path.hpp>
 #include <opencv2/highgui/highgui.hpp>
 #include <opencv2/imgproc/imgproc.hpp>
 #include <random>
@@ -30,6 +29,7 @@
 #include "geometry_msgs/msg/pose_stamped.hpp"
 #include "nav_msgs/msg/occupancy_grid.hpp"
 #include "nav_msgs/msg/odometry.hpp"
+#include "nav_msgs/msg/path.hpp"
 #include "rclcpp/rclcpp.hpp"
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "tf2_geometry_msgs/tf2_geometry_msgs.hpp"
@@ -40,22 +40,12 @@
 
 using namespace std;
 
-class TimeNode : public rclcpp::Node {
-   public:
-    TimeNode() : Node("time_node") { clock_ = this->get_clock(); }
-
-    void SetCurrentTime() {
-        current_time = clock_->now().seconds();
-        prev_time = current_time;
-    }
-    auto Timeout() -> bool { return clock_->now().seconds() - prev_time > 20.0; }
-
-   private:
-    rclcpp::Clock::SharedPtr clock_;
-    double current_time = 0.0;
-    double prev_time = 0.0;
-};
-
+/**
+ * @brief This class is a reader for reading CSV files containing the waypoints
+ *  of the path to follow.
+ *
+ * The waypoints will be extracted to the vector `waypoints`
+ */
 class WaypointsReader {
    public:
     WaypointsReader(std::vector<std::pair<double, double>>& waypoints) {
@@ -102,9 +92,17 @@ typedef struct RRT_Node {
     bool is_root = false;
 } RRT_Node;
 
+/**
+ * @brief This class is used for visualizing the waypoints, goal point, the RRT algorithm's tree and path.
+ *  It maintains all messages for the RRT to call publisher to publish.
+ */
 class WaypointVisualizer {
    public:
     WaypointVisualizer() {}
+    /**
+     * @brief: Update the visualization of the waypoints and the tree, and the path.
+     *  Then, wait RRT node to publish these visualization message
+     */
     void update_visualization(const std::vector<RRT_Node>& path_in_tree, const std::vector<RRT_Node>& tree) {
         this->path_to_visualize = path_in_tree;
         this->tree_to_visualize = tree;
@@ -115,17 +113,40 @@ class WaypointVisualizer {
     nav_msgs::msg::Path path_msg;
     visualization_msgs::msg::MarkerArray tree_msg;
     visualization_msgs::msg::Marker current_waypoint;
-    
+    visualization_msgs::msg::Marker goal_waypoint;
+
     std::vector<RRT_Node> path_to_visualize;
-
-   private:
-
     std::vector<RRT_Node> tree_to_visualize;
 
+    /**
+     * @brief: visualize_goal is used for visualizing the goal waypoint.
+     *  This function only called once each time the RRT is finding the tree and path, when there are still waypoints.
+     * 
+     * @param: goal_x, which is the x of the last point among all waypoints
+     * @param: goal_y, which is the y (in the global reference frame)
+     */
+    void visualize_goal(double goal_x, double goal_y) {
+        goal_waypoint.lifetime = rclcpp::Duration::from_seconds(0.5);
+        goal_waypoint.type = visualization_msgs::msg::Marker::CYLINDER;
+        goal_waypoint.action = visualization_msgs::msg::Marker::ADD;
+        goal_waypoint.id = 0;
+        goal_waypoint.scale.x = 0.2;
+        goal_waypoint.scale.y = 0.2;
+        goal_waypoint.scale.z = 0.5;
+        goal_waypoint.color.g = 0.0f;
+        goal_waypoint.color.a = 1.0;  // Don't forget to set the alpha!
+        goal_waypoint.color.r = 1.0;
+        goal_waypoint.color.b = 0.0;
+        goal_waypoint.header.frame_id = "map";
+        goal_waypoint.pose.position.z = 0;
+        goal_waypoint.pose.position.x = goal_x;  // waypoints.back().first;
+        goal_waypoint.pose.position.y = goal_y;  // waypoints.back().second;
+    }
+
+   private:
     void visualize_waypoints() {
-        if (path_to_visualize.empty()) {
-            return;
-        }
+        if (path_to_visualize.empty()) return;
+
         path_msg.poses.clear();
         for (auto each : path_to_visualize) {
             geometry_msgs::msg::PoseStamped pose;
@@ -161,10 +182,8 @@ class WaypointVisualizer {
     }
 
     void visualize_tree() {
-        if (tree_to_visualize.empty()) {
-            std::cout << "Tree is empty" << std::endl;
-            return;
-        }
+        if (tree_to_visualize.empty()) return;
+
         visualization_msgs::msg::MarkerArray marker_array;
 
         visualization_msgs::msg::Marker nodes_marker;
@@ -239,14 +258,14 @@ class RRT : public rclcpp::Node {
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr marker_pub;
     rclcpp::Publisher<visualization_msgs::msg::Marker>::SharedPtr goal_marker_pub;
 
-    std::shared_ptr<TimeNode> timer_node_ = std::make_shared<TimeNode>();
-
     string pose_topic = "/ego_racecar/odom";
     string scan_topic = "/scan";
     string drive_topic = "/drive";
     string occupancy_grid_topic = "/local_occupancy_grid";
     string path_topic = "/path";
     string tree_topic = "/tree";
+    string visualization_marker_topic = "/visualization_marker";
+    string goal_marker_topic = "/goal_marker";
 
     string goal_frame_id = "map";
     string robot_frame_id = "ego_racecar/base_link";
@@ -259,10 +278,14 @@ class RRT : public rclcpp::Node {
 
     nav_msgs::msg::OccupancyGrid occupancy_grid_;
     int occupancy_grid_width_ = 100;
-    int occupancy_grid_height_ = 100;           // 4 meters for the height
-    double occupancy_grid_resolution_ = 0.04;  // 2 cm per cell, 100 cells in a meter
-    int x_offset_ = 0; // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1 / 2;                         // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1/4;
+    int occupancy_grid_height_ = 100;          // 4 meters for the height
+    double occupancy_grid_resolution_ = 0.04;  // 4 cm per cell, 25 cells in a meter
+    int x_offset_ = 0;  // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1 / 2;                         //
+                        // -1 * occupancy_grid_width_ * occupancy_grid_resolution_ * 1/4;
     int y_offset_ = -1 * occupancy_grid_height_ * occupancy_grid_resolution_ * 1 / 2;
+    int robot_radius_ = 5;
+    int8_t obstacle_free_cost_ = 0;
+    int8_t obstacle_cost_ = 100;
 
     geometry_msgs::msg::Pose robot_pose_;
     nav_msgs::msg::Odometry robot_odom_;
@@ -276,6 +299,10 @@ class RRT : public rclcpp::Node {
     // RRT variables
     double max_expansion_dist_ = 1.0f;
     double goal_threshold_ = 0.15f;
+    double goal_reached_threshold_ = 0.6f;
+    
+    int max_tree_size_ = 300000;
+
 
     // callbacks
     // where rrt actually happens
