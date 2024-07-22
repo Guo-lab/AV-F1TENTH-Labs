@@ -23,23 +23,41 @@ foreach(PACKAGE
   std_msgs
   visualization_msgs
   Eigen3
-  tf2_ros)
+  tf2_ros
+  osqp
+  OsqpEigen)
 
   find_package(${PACKAGE} REQUIRED)
 
 endforeach()
+
 
 # Include Cpp "include" directory
 include_directories(include)
 include_directories(
   ${EIGEN3_INCLUDE_DIRS}
 )
+include_directories(
+  ${OsqpEigen_DIR}
+  ${osqp_DIR}
+)
 
 # Create Cpp executable
 add_executable(mpc_node src/mpc_node.cpp)
 
+target_link_libraries(mpc_node OsqpEigen::OsqpEigen)
+
 ament_target_dependencies(mpc_node 
-  rclcpp geometry_msgs ackermann_msgs nav_msgs sensor_msgs std_msgs visualization_msgs tf2_ros
+  rclcpp 
+  geometry_msgs 
+  ackermann_msgs 
+  nav_msgs 
+  sensor_msgs 
+  std_msgs 
+  visualization_msgs 
+  tf2_ros 
+  OsqpEigen
+  Eigen3
 )
 
 # Install Cpp executables
