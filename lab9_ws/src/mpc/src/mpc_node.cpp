@@ -100,7 +100,7 @@ class MPC : public rclcpp::Node {
         drive_pub_ = this->create_publisher<ackermann_msgs::msg::AckermannDriveStamped>("/drive", 10);
 
         WaypointsReader waypoints_reader(waypoints);
-        RCLCPP_INFO_STREAM(rclcpp::get_logger("RRT"), "Loaded " << waypoints.size() << " waypoints.");
+        RCLCPP_INFO_STREAM(rclcpp::get_logger("MPC"), "Loaded " << waypoints.size() << " waypoints.");
     }
 
     /**
@@ -157,11 +157,11 @@ class MPC : public rclcpp::Node {
         tf2::Matrix3x3(tf2::Quaternion(orientation.x, orientation.y, orientation.z, orientation.w))
             .getRPY(roll, pitch, yaw);
 
-        Eigen::VectorXd state(3);
+        VectorXd state(3);
         state << position.x, position.y, yaw;
 
         // Define the reference trajectory (can be set dynamically)
-        Eigen::VectorXd ref_trajectory(3);
+        VectorXd ref_trajectory(3);
         ref_trajectory << 5.0, 5.0, 0.0;
 
         // // Solve the MPC problem to get the optimal control input
