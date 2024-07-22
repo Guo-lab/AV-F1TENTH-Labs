@@ -1,10 +1,14 @@
+#include <OsqpEigen/OsqpEigen.h>
+#include <osqp/osqp.h>
 #include <tf2/LinearMath/Matrix3x3.h>
 #include <tf2/LinearMath/Quaternion.h>
 #include <tf2_ros/transform_broadcaster.h>
 
+#include <Eigen/Dense>
+#include <Eigen/Sparse>
 #include <cmath>
-#include <sstream>
 #include <fstream>
+#include <sstream>
 #include <string>
 #include <vector>
 
@@ -15,17 +19,13 @@
 #include "sensor_msgs/msg/laser_scan.hpp"
 #include "visualization_msgs/msg/marker.hpp"
 
-#include <Eigen/Sparse>
-#include <osqp/osqp.h>
-#include <OsqpEigen/OsqpEigen.h>
-
 /// CHECK: include needed ROS msg type headers and libraries
 
 /**
  * @ref F1Tenth L12 - Model Predictive Control
  *  Many solvers available: CVXGen, OSQP, QuadProg, Casadi (for non-convex optimization), Multi-Parametric Toolbox
  * (MPT3) ...
- * 
+ *
  *  Recommended OSQP: nice EIGEN interface
  * '@ref: https://osqp.org/docs/get_started/sources.html
  *  @ref: https://github.com/robotology/osqp-eigen
@@ -118,32 +118,61 @@ class MPC : public rclcpp::Node {
         return 1.0;
     }
 
-    // /**
-    //  * @brief solve_mpc: Solves the MPC optimization problem
-    //  *  Define optimization problem here using OsqpEigen or other solvers
-    //  */
-    // Eigen::VectorXd solve_mpc(const Eigen::VectorXd& state, const Eigen::VectorXd& ref_trajectory) {
-    //     int state_dim = 3;    // [x, y, yaw]
-    //     int control_dim = 2;  // [speed, steering_angle]
-    //     int horizon = 10;     // Prediction horizon
+    /**
+     * @brief solve_mpc: Solves the MPC optimization problem
+     *  Define optimization problem here using OsqpEigen or other solvers
+     */
+    VectorXd solve_mpc(const VectorXd& state, const VectorXd& ref_trajectory) {
+        assert(state.size() == ref_trajectory.size());
+        int state_dim = state.size();  // [x, y, theta]
+        int control_dim = 2;           // [v, delta], [speed, steering_angle]
+        int horizon = 10;              // Prediction horizon
 
-    //     Eigen::MatrixXd A(state_dim, state_dim);    // State transition matrix
-    //     Eigen::MatrixXd B(state_dim, control_dim);  // Control matrix
-    //     Eigen::VectorXd Q(state_dim);               // State cost matrix
-    //     Eigen::VectorXd R(control_dim);             // Control cost matrix
+        Eigen::MatrixXd A(state_dim, state_dim);    // State transition matrix
+        Eigen::MatrixXd B(state_dim, control_dim);  // Control matrix
 
-    //     // Fill A, B, Q, R according to your model
+        // Define cost matrices
+        MatrixXd Q = MatrixXd::Identity(state_dim, state_dim);      // State cost matrix
+        MatrixXd R = MatrixXd::Identity(control_dim, control_dim);  // Control cost matrix
 
-    //     OsqpEigen::Solver solver;
+        // Define constraints
+        VectorXd lower_bound(state_dim * horizon + control_dim * (horizon - 1));
+        VectorXd upper_bound(state_dim * horizon + control_dim * (horizon - 1));
 
-    //     // Define your optimization problem
-    //     // Set the problem dimensions, matrices and vectors
+        // Initialize OSQP solver
+        OsqpEigen::Solver solver;
+        solver.settings()->setWarmStart(true);
+        solver.settings()->setVerbosity(false);
 
-    //     solver.solve();
-    //     Eigen::VectorXd control_input(control_dim);
+        // Define the optimization problem
+        SparseMatrix<double> H;           // Hessian matrix
+        VectorXd g;                       // Gradient vector
+        SparseMatrix<double> constraint;  // Constraint matrix
+        VectorXd b;                       // Constraint vector
 
-    //     return control_input;
-    // }
+        // Fill the matrices and vectors with problem-specific data
+        // This will involve setting up the kinematic bicycle model dynamics
+        // and constraints based on the ref_trajectory_points
+
+        solver.data()->setNumberOfVariables(state_dim * horizon + control_dim * (horizon - 1));
+        solver.data()->setNumberOfConstraints(state_dim * horizon + control_dim * (horizon - 1));
+
+        if (!solver.data()->setHessianMatrix(H)) return VectorXd::Zero(control_dim);
+        if (!solver.data()->setGradient(g)) return VectorXd::Zero(control_dim);
+        // if (!solver.data()->setLinearConstraintsMatrix(A)) return VectorXd::Zero(control_dim);
+        if (!solver.data()->setLowerBound(lower_bound)) return VectorXd::Zero(control_dim);
+        if (!solver.data()->setUpperBound(upper_bound)) return VectorXd::Zero(control_dim);
+
+        // Solve the problem
+        // Solve the problem
+        if (!solver.initSolver()) return VectorXd::Zero(control_dim);
+        if (solver.solveProblem() != OsqpEigen::ErrorExitFlag::NoError) return VectorXd::Zero(control_dim);
+
+        // Extract the control input
+        VectorXd control_input = solver.getSolution().head(control_dim);
+
+        return control_input;
+    }
 
     /**
      * @brief pose_callback: Callback function for pose subscriber. This function is called whenever a new pose message
@@ -161,17 +190,21 @@ class MPC : public rclcpp::Node {
         state << position.x, position.y, yaw;
 
         // Define the reference trajectory (can be set dynamically)
-        VectorXd ref_trajectory(3);
-        ref_trajectory << 5.0, 5.0, 0.0;
+        VectorXd ref_trajectory(3 * waypoints.size());
+        for (size_t i = 0; i < waypoints.size(); ++i) {
+            ref_trajectory(3 * i) = waypoints[i].first;
+            ref_trajectory(3 * i + 1) = waypoints[i].second;
+            ref_trajectory(3 * i + 2) = 0.0;
+        }
 
         // // Solve the MPC problem to get the optimal control input
-        // Eigen::VectorXd control_input = solve_mpc(state, ref_trajectory);
+        VectorXd control_input = solve_mpc(state, ref_trajectory);
 
         // Apply control input
         drive_msg = ackermann_msgs::msg::AckermannDriveStamped();
 
-        // drive_msg.drive.speed = control_input[0];
-        // drive_msg.drive.steering_angle = control_input[1];
+        drive_msg.drive.speed = control_input[0];
+        drive_msg.drive.steering_angle = control_input[1];
 
         drive_pub_->publish(drive_msg);
     }
