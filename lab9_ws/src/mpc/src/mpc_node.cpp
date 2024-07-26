@@ -21,6 +21,8 @@
 
 /// CHECK: include needed ROS msg type headers and libraries
 
+// to be moved to hpp file
+
 /**
  * @ref F1Tenth L12 - Model Predictive Control
  *  Many solvers available: CVXGen, OSQP, QuadProg, Casadi (for non-convex optimization), Multi-Parametric Toolbox
@@ -29,6 +31,12 @@
  *  Recommended OSQP: nice EIGEN interface
  * '@ref: https://osqp.org/docs/get_started/sources.html
  *  @ref: https://github.com/robotology/osqp-eigen
+ *
+ * @ref:
+ *  https://thomasfermi.github.io/Algorithms-for-Automated-Driving/Control/BicycleModel.html
+ *  https://math.stackexchange.com/questions/3177528/how-to-linearize-a-kinematic-bicycle-model
+ *
+ * @ref: https://github.com/JunshengFu/Model-Predictive-Control
  */
 
 using namespace std;
@@ -76,6 +84,15 @@ class WaypointsReader {
     }
 };
 
+struct BicycleModelState {
+    double position_x;
+    double position_y;
+    double psi;
+    double velocity;
+    double cross_track_error;
+    double heading_error;
+};
+
 /**
  * @brief MPC class for implementing the MPC controller
  */
@@ -90,6 +107,11 @@ class MPC : public rclcpp::Node {
     rclcpp::Publisher<ackermann_msgs::msg::AckermannDriveStamped>::SharedPtr drive_pub_;
 
     std::vector<std::pair<double, double>> waypoints;
+    double steering_angle_ = 0.0;
+    double throttle_ = 0.0;
+
+    double latency_ = 0.1;  // 100 ms
+    double Lf_ = 0.33 / 2;  // the distance between the front axle and its center of mass is half of the wheelbase
 
    public:
     MPC() : Node("mpc_node") {
@@ -101,6 +123,9 @@ class MPC : public rclcpp::Node {
 
         WaypointsReader waypoints_reader(waypoints);
         RCLCPP_INFO_STREAM(rclcpp::get_logger("MPC"), "Loaded " << waypoints.size() << " waypoints.");
+
+        steering_angle_ = 0.0;
+        throttle_ = 0.0;
     }
 
     /**
@@ -123,7 +148,7 @@ class MPC : public rclcpp::Node {
      *  Define optimization problem here using OsqpEigen or other solvers
      */
     VectorXd solve_mpc(const VectorXd& state, const VectorXd& ref_trajectory) {
-        assert(state.size() == ref_trajectory.size());
+        // assert(state.size() == ref_trajectory.size());
         int state_dim = state.size();  // [x, y, theta]
         int control_dim = 2;           // [v, delta], [speed, steering_angle]
         int horizon = 10;              // Prediction horizon
@@ -175,19 +200,71 @@ class MPC : public rclcpp::Node {
     }
 
     /**
+     * @brief convert_map_coordinates_to_car_coordinates: Converts the map coordinates to car coordinates
+     */
+    void convert_map_coordinates_to_car_coordinates(double px, double py, double psi, VectorXd& ptsx, VectorXd& ptsy) {
+        for (size_t i = 0; i < waypoints.size(); i++) {
+            double shift_x = waypoints[i].first - px;
+            double shift_y = waypoints[i].second - py;
+
+            ptsx[i] = shift_x * std::cos(-psi) - shift_y * std::sin(-psi);
+            ptsy[i] = shift_x * std::sin(-psi) + shift_y * std::cos(-psi);
+        }
+    }
+
+    VectorXd polyfit(VectorXd xvals, VectorXd yvals, int order) {
+        assert(xvals.size() == yvals.size());
+        assert(order >= 1 && order <= xvals.size() - 1);
+
+        MatrixXd A(xvals.size(), order + 1);
+        for (int i = 0; i < xvals.size(); i++) {
+            A(i, 0) = 1.0;
+        }
+
+        for (int i = 0; i < xvals.size(); i++) {
+            for (int j = 0; j < order; j++) {
+                A(i, j + 1) = A(i, j) * xvals(i);
+            }
+        }
+
+        auto Q = A.householderQr();
+        auto result = Q.solve(yvals);
+
+        return result;
+    }
+
+    /**
      * @brief pose_callback: Callback function for pose subscriber. This function is called whenever a new pose message
      * is received.
      */
     void pose_callback(const nav_msgs::msg::Odometry::ConstSharedPtr& pose_msg) {
+        // waypoints: vector of pairs of x, y coordinates: ptsx, ptsy
+        //
         auto position = pose_msg->pose.pose.position;
+        // position: x, y
         auto orientation = pose_msg->pose.pose.orientation;
 
         double roll, pitch, yaw;
         tf2::Matrix3x3(tf2::Quaternion(orientation.x, orientation.y, orientation.z, orientation.w))
             .getRPY(roll, pitch, yaw);
 
-        VectorXd state(3);
-        state << position.x, position.y, yaw;
+        // Extract linear velocity components
+        double linear_x = pose_msg->twist.twist.linear.x;
+        double linear_y = pose_msg->twist.twist.linear.y;
+        double linear_z = pose_msg->twist.twist.linear.z;
+
+        // Calculate speed
+        double speed = std::sqrt(linear_x * linear_x + linear_y * linear_y + linear_z * linear_z);
+
+        VectorXd ptsx_car(waypoints.size());
+        VectorXd ptsy_car(waypoints.size());
+        convert_map_coordinates_to_car_coordinates(position.x, position.y, yaw, ptsx_car, ptsy_car);
+
+        // Fit a 3-order polynomial for the waypoints
+        VectorXd coeffs = polyfit(ptsx_car, ptsy_car, 3);
+
+        VectorXd state(6);  // [x, y, psi, v, cte, epsi]
+        state << position.x, position.y, yaw, speed;
 
         // Define the reference trajectory (can be set dynamically)
         VectorXd ref_trajectory(3 * waypoints.size());

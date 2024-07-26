@@ -49,7 +49,7 @@ using namespace std;
 class WaypointsReader {
    public:
     WaypointsReader(std::vector<std::pair<double, double>>& waypoints) {
-        std::string file_path = "./src/lab7_pkg/data/waypoints.csv";
+        std::string file_path = "./src/lab7_pkg/data/waypoints_5.csv";
         read_waypoints_csv(file_path, waypoints);
     }
 

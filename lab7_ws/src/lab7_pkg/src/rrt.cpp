@@ -542,7 +542,7 @@ std::vector<RRT_Node> RRT::find_path(std::vector<RRT_Node>& tree, RRT_Node& late
 auto RRT::get_speed_based_on_angle(double steering_angle) -> double {
     double abs_angle = std::abs(steering_angle);
     if (abs_angle >= 0.0 * (M_PI / 180.0) && abs_angle <= 5.0 * (M_PI / 180.0)) {
-        return 3.0;
+        return 2.0;
     }
     if (abs_angle > 5.0 * (M_PI / 180.0) && abs_angle <= 10.0 * (M_PI / 180.0)) {
         return 1.0;

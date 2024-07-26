@@ -10,3 +10,4 @@ source /opt/ros/humble/setup.bash
 source install/local_setup.bash
 colcon build
 ros2 run mpc mpc_node
+ros2 run mpc waypoints_logger.py

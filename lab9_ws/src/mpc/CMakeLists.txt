@@ -24,6 +24,7 @@ foreach(PACKAGE
   visualization_msgs
   Eigen3
   tf2_ros
+  tf2
   osqp
   OsqpEigen)
 
@@ -56,6 +57,7 @@ ament_target_dependencies(mpc_node
   std_msgs 
   visualization_msgs 
   tf2_ros 
+  tf2
   OsqpEigen
   Eigen3
 )
@@ -71,6 +73,8 @@ ament_python_install_package(${PROJECT_NAME})
 # Install Python executables
 install(PROGRAMS
   scripts/mpc_node.py
+  scripts/waypoints_logger.py
+  scripts/utils.py
   DESTINATION lib/${PROJECT_NAME}
 )
 
