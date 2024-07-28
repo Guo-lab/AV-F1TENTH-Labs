@@ -146,6 +146,8 @@ class MPC : public rclcpp::Node {
     /**
      * @brief solve_mpc: Solves the MPC optimization problem
      *  Define optimization problem here using OsqpEigen or other solvers
+     * 
+     * A MPC Templates
      */
     VectorXd solve_mpc(const VectorXd& state, const VectorXd& ref_trajectory) {
         // assert(state.size() == ref_trajectory.size());
